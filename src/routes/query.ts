@@ -24,7 +24,7 @@ async function queryRoutes(app: FastifyInstance) {
     schema: {
       body: {
         type: 'object',
-        required: ['title', 'status', 'formDataId'],
+        required: ['title', 'formDataId'],
         properties: {
           title: { type: 'string' },
           description: { type: 'string' },
@@ -36,7 +36,8 @@ async function queryRoutes(app: FastifyInstance) {
     async handler(req, reply) {
       log.debug('create query', { body: req.body })
       try {
-        const { title, description, status, formDataId } = req.body
+        const { title, description, formDataId } = req.body
+        const status: string = req.body.status || 'OPEN'  // Default to OPEN
         
         if (!isValidStatus(status)) {
           throw new ApiError('Status must be either OPEN or RESOLVED', 400)
@@ -55,7 +56,7 @@ async function queryRoutes(app: FastifyInstance) {
           data: {
             title,
             description,
-            status,
+            status: status as any,  // Cast to enum type
             formDataId
           },
           include: {
@@ -101,6 +102,7 @@ async function queryRoutes(app: FastifyInstance) {
           where: { id },
           data: {
             ...updateData,
+            status: updateData.status as any,  // Cast to enum type
             updatedAt: new Date()
           },
           include: {

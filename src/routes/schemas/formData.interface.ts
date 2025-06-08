@@ -29,7 +29,7 @@ export interface ICountedQueries {
 export interface ICreateQuery {
   title: string
   description?: string | null
-  status: string
+  status?: string  // Made optional since it defaults to OPEN
   formDataId: string
 }
 
