@@ -5,6 +5,12 @@ import { serializer } from './middleware/pre_serializer'
 import { IQuery, ICreateQuery, IUpdateQuery } from './schemas/formData.interface'
 import { ApiError } from '../errors'
 
+const VALID_STATUSES = ['OPEN', 'RESOLVED'] as const
+
+function isValidStatus(status: string): boolean {
+  return VALID_STATUSES.includes(status as any)
+}
+
 async function queryRoutes(app: FastifyInstance) {
   app.setReplySerializer(serializer)
 
@@ -15,10 +21,26 @@ async function queryRoutes(app: FastifyInstance) {
     Body: ICreateQuery
     Reply: IQuery
   }>('', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['title', 'status', 'formDataId'],
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          status: { type: 'string' },
+          formDataId: { type: 'string' }
+        }
+      }
+    },
     async handler(req, reply) {
-      log.debug('create query')
+      log.debug('create query', { body: req.body })
       try {
         const { title, description, status, formDataId } = req.body
+        
+        if (!isValidStatus(status)) {
+          throw new ApiError('Status must be either OPEN or RESOLVED', 400)
+        }
         
         // Verify formData exists
         const formData = await prisma.formData.findUnique({
@@ -61,6 +83,10 @@ async function queryRoutes(app: FastifyInstance) {
       try {
         const { id } = req.params
         const updateData = req.body
+
+        if (updateData.status && !isValidStatus(updateData.status)) {
+          throw new ApiError('Status must be either OPEN or RESOLVED', 400)
+        }
 
         // Check if query exists
         const existingQuery = await prisma.query.findUnique({
