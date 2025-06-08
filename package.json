@@ -3,7 +3,9 @@
     "@fastify/cors": "^10.0.2",
     "@prisma/client": "^6.2.0",
     "env-cmd": "^10.1.0",
-    "fastify": "^5.2.1"
+    "fastify": "^5.2.1",
+    "framer-motion": "^12.16.0",
+    "lucide-react": "^0.513.0"
   },
   "name": "backend",
   "description": "## Introduction The purpose of this project is to simulate the back-end development work at Vial. It implements the main stack we use for our APIs.",
