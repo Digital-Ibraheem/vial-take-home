@@ -72,7 +72,7 @@ function useApiOperation<T>(
 }
 
 // Specialized hook for managing form data and queries
-export function useFormData(): UseFormDataReturn {
+function useFormData(): UseFormDataReturn {
   const [formData, setFormData] = useState<IFormData[]>([]);
   const [queries, setQueries] = useState<IQuery[]>([]);
   const [loading, setLoading] = useState(false);
@@ -99,7 +99,7 @@ export function useFormData(): UseFormDataReturn {
 }
 
 // Hook for creating queries
-export function useCreateQuery(onSuccess?: (query: IQuery) => void) {
+function useCreateQuery(onSuccess?: (query: IQuery) => void) {
   return useApiOperation(
     (formData: IFormData, description: string, status: 'OPEN' | 'RESOLVED' = 'OPEN') =>
       api.createQueryForFormData(formData, description, status),
@@ -114,7 +114,7 @@ export function useCreateQuery(onSuccess?: (query: IQuery) => void) {
 }
 
 // Hook for updating queries
-export function useUpdateQuery(onSuccess?: (query: IQuery) => void) {
+function useUpdateQuery(onSuccess?: (query: IQuery) => void) {
   return useApiOperation(
     (queryId: string, queryData: IUpdateQuery) =>
       api.query.update(queryId, queryData),
@@ -129,7 +129,7 @@ export function useUpdateQuery(onSuccess?: (query: IQuery) => void) {
 }
 
 // Hook for deleting queries
-export function useDeleteQuery(onSuccess?: () => void) {
+function useDeleteQuery(onSuccess?: () => void) {
   return useApiOperation(
     (queryId: string) => api.query.delete(queryId),
     {
@@ -143,7 +143,7 @@ export function useDeleteQuery(onSuccess?: () => void) {
 }
 
 // Convenience hook for status updates
-export function useUpdateQueryStatus(onSuccess?: (query: IQuery) => void) {
+function useUpdateQueryStatus(onSuccess?: (query: IQuery) => void) {
   return useApiOperation(
     (queryId: string, status: 'OPEN' | 'RESOLVED') =>
       api.updateQueryStatus(queryId, status),
@@ -158,7 +158,7 @@ export function useUpdateQueryStatus(onSuccess?: (query: IQuery) => void) {
 }
 
 // Hook for complete query updates (description + status)
-export function useUpdateQueryComplete(onSuccess?: (query: IQuery) => void) {
+function useUpdateQueryComplete(onSuccess?: (query: IQuery) => void) {
   return useApiOperation(
     (queryId: string, description: string, status: 'OPEN' | 'RESOLVED') =>
       api.updateQueryComplete(queryId, description, status),
