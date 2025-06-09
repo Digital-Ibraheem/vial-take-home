@@ -30,7 +30,7 @@ export function Navigation({ collapsed, activeFilter, onFilterChange }: Navigati
   ];
 
   return (
-    <Stack gap="xs">
+    <Stack gap="sm">
       {navItems.map((item) => (
         <NavLink
           key={item.value}
@@ -40,22 +40,26 @@ export function Navigation({ collapsed, activeFilter, onFilterChange }: Navigati
           onClick={() => onFilterChange(item.value)}
           style={{
             borderRadius: '12px',
-            padding: '12px 16px',
+            padding: '14px 18px',
             fontWeight: activeFilter === item.value ? 600 : 500,
             fontSize: '15px',
             transition: 'all 0.2s ease',
             border: 'none',
+            cursor: 'pointer',
           }}
           styles={{
             root: {
               '&:hover': {
                 backgroundColor: 'var(--mantine-color-gray-1)',
+                transform: 'translateX(2px)',
               },
               '&[dataActive]': {
                 backgroundColor: 'var(--mantine-color-blue-0)',
                 color: 'var(--mantine-color-blue-7)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
                 '&:hover': {
                   backgroundColor: 'var(--mantine-color-blue-1)',
+                  transform: 'translateX(2px)',
                 },
               },
             },

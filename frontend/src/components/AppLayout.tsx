@@ -1,9 +1,6 @@
 'use client';
 
-import { AppShell, Text, ActionIcon, Group } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AppShell, Text } from '@mantine/core';
 import { useState } from 'react';
 import { Navigation } from './Navigation';
 import { MainContent } from './MainContent';
@@ -15,68 +12,40 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
-  const [desktopCollapsed, { toggle: toggleDesktop }] = useDisclosure();
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
   return (
-    <AppShell
-      header={{ height: 70 }}
-      navbar={{
-        width: 280,
-        breakpoint: 'sm',
-        collapsed: { mobile: !mobileOpened, desktop: desktopCollapsed },
-      }}
-      padding={0}
-    >
-      <AppShell.Header>
-        <Group h="100%" px="xl" justify="space-between" style={{
-          borderBottom: '1px solid var(--mantine-color-gray-2)',
-          backgroundColor: 'var(--mantine-color-white)',
-        }}>
-          <Group gap="md">
-            <ActionIcon
-              onClick={toggleDesktop}
-              variant="subtle"
-              size="lg"
-              color="gray"
-              style={{ 
-                borderRadius: '8px',
-              }}
-            >
-              {desktopCollapsed ? <IconChevronRight size={18} /> : <IconChevronLeft size={18} />}
-            </ActionIcon>
-            <Text size="xl" fw={600} c="gray.8">
-              Query Management
-            </Text>
-          </Group>
-        </Group>
-      </AppShell.Header>
-
-      <motion.div
-        initial={false}
-        animate={{
-          x: desktopCollapsed ? -280 : 0,
-        }}
-        transition={{
-          duration: 0.3,
-          ease: "easeInOut"
-        }}
+    <AppShell padding={0}>
+      <div
         style={{
           position: 'fixed',
-          top: 70,
+          top: 0,
           left: 0,
           width: 280,
-          height: 'calc(100vh - 70px)',
+          height: '100vh',
           zIndex: 199,
           backgroundColor: 'var(--mantine-color-gray-0)',
           borderRight: '1px solid var(--mantine-color-gray-2)',
-          boxShadow: '0 0 20px rgba(0, 0, 0, 0.05)',
+          boxShadow: '0 0 20px rgba(0, 0, 0, 0.08)',
         }}
       >
-        <div style={{ padding: '24px 20px', height: '100%' }}>
-          <Text size="sm" fw={500} c="gray.6" mb="lg" style={{ letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-            Filters
+        <div style={{ 
+          padding: '32px 24px', 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <Text 
+            size="sm" 
+            fw={600} 
+            c="gray.6" 
+            mb="xl"
+            style={{ 
+              letterSpacing: '0.8px', 
+              textTransform: 'uppercase',
+            }}
+          >
+            Filter Queries
           </Text>
           
           <Navigation 
@@ -85,14 +54,14 @@ export function AppLayout({ children }: AppLayoutProps) {
             onFilterChange={setActiveFilter}
           />
         </div>
-      </motion.div>
+      </div>
 
       <AppShell.Main style={{ 
-        marginLeft: desktopCollapsed ? 0 : 280,
-        transition: 'margin-left 0.3s ease',
-        padding: '32px',
+        marginLeft: 280,
+        padding: '40px 48px',
         backgroundColor: 'var(--mantine-color-gray-0)',
-        minHeight: 'calc(100vh - 70px)',
+        minHeight: '100vh',
+        maxWidth: '100%',
       }}>
         <MainContent filter={activeFilter} />
       </AppShell.Main>
