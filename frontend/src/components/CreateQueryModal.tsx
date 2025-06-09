@@ -13,6 +13,7 @@ interface CreateQueryModalProps {
   queryDescription: string;
   onQueryDescriptionChange: (value: string) => void;
   onSubmit: () => void;
+  loading?: boolean;
 }
 
 export function CreateQueryModal({
@@ -21,7 +22,8 @@ export function CreateQueryModal({
   selectedItem,
   queryDescription,
   onQueryDescriptionChange,
-  onSubmit
+  onSubmit,
+  loading = false
 }: CreateQueryModalProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -118,9 +120,10 @@ export function CreateQueryModal({
           </Button>
           <Button 
             onClick={onSubmit}
-            disabled={!queryDescription.trim()}
+            disabled={!queryDescription.trim() || loading}
+            loading={loading}
             size={isMobile ? "md" : "md"}
-            leftSection={<IconPlus size={16} />}
+            leftSection={!loading ? <IconPlus size={16} /> : undefined}
             fullWidth={isMobile}
             style={{ flex: isMobile ? 1 : 'none', minWidth: isMobile ? 'auto' : '140px' }}
           >

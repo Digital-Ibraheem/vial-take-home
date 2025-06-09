@@ -1,45 +1,45 @@
 'use client';
 
 import React from 'react';
-import { Container, Stack, Box, Text, Group, Card } from '@mantine/core';
-import { useState } from 'react';
+import { Container, Stack, Box, Text, Group, Card, Loader, Alert } from '@mantine/core';
+import { useState, useEffect } from 'react';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { IconAlertCircle, IconRefresh } from '@tabler/icons-react';
 import { FilterType } from './AppLayout';
-import { mockFormData, mockQueries, type FormData, type Query } from '../data/mockQueries';
+import { type FormData, type Query } from '../data/mockQueries';
 import { CreateQueryModal } from './CreateQueryModal';
 import { DeleteQueryModal } from './DeleteQueryModal';
 import { ResponsesTable } from './ResponsesTable';
+import { useFormData, useCreateQuery, useUpdateQueryComplete, useDeleteQuery } from '../hooks/useApi';
+import { adaptApiDataForComponents } from '../utils/typeAdapters';
 
 interface MainContentProps {
   filter: FilterType;
 }
 
-// Helper functions for filtering data
-const getQueriesForFormData = (formDataId: number): Query[] => {
-  return mockQueries.filter(query => query.formDataId === formDataId);
-};
-
-const getQueriesCount = (formDataId: number, status?: 'OPEN' | 'RESOLVED'): number => {
-  const queries = getQueriesForFormData(formDataId);
-  if (status) {
-    return queries.filter(query => query.status === status).length;
-  }
-  return queries.length;
-};
-
-const getFilteredFormData = (filter: FilterType): FormData[] => {
+// Helper functions for filtering data (now uses adapted API data)
+const getFilteredFormData = (
+  formData: FormData[], 
+  queries: Query[], 
+  filter: FilterType,
+  getQueriesForFormData: (formDataId: number) => Query[]
+): FormData[] => {
   if (filter === 'All') {
-    return mockFormData;
+    return formData;
   }
   
   // For Open/Resolved filters, only show form data that has queries with that status
-  return mockFormData.filter(formData => {
-    const queries = getQueriesForFormData(formData.id);
+  return formData.filter(fd => {
+    const queries = getQueriesForFormData(fd.id);
     return queries.some(query => query.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
   });
 };
 
-const getFilteredQueries = (formDataId: number, filter: FilterType): Query[] => {
+const getFilteredQueries = (
+  formDataId: number, 
+  filter: FilterType,
+  getQueriesForFormData: (formDataId: number) => Query[]
+): Query[] => {
   const queries = getQueriesForFormData(formDataId);
   
   if (filter === 'All') {
@@ -52,6 +52,12 @@ const getFilteredQueries = (formDataId: number, filter: FilterType): Query[] => 
 
 export function MainContent({ filter }: MainContentProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  // API hooks
+  const { formData: apiFormData, queries: apiQueries, loading, error, refetch } = useFormData();
+  const createQuery = useCreateQuery((newQuery) => refetch());
+  const updateQuery = useUpdateQueryComplete((updatedQuery) => refetch());
+  const deleteQuery = useDeleteQuery(() => refetch());
   
   // Modal state
   const [createModalOpened, { open: openCreateModal, close: closeCreateModal }] = useDisclosure(false);
@@ -68,6 +74,15 @@ export function MainContent({ filter }: MainContentProps) {
   const [editingDescription, setEditingDescription] = useState('');
   const [editingStatus, setEditingStatus] = useState<'OPEN' | 'RESOLVED'>('OPEN');
 
+  // Fetch data on component mount
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  // Adapt API data to component format
+  const adaptedData = adaptApiDataForComponents(apiFormData, apiQueries);
+  const { formData, queries, getQueriesForFormData, getQueriesCount } = adaptedData;
+
   // Event handlers
   const handleCreateQuery = (item: FormData) => {
     setSelectedItem(item);
@@ -75,16 +90,24 @@ export function MainContent({ filter }: MainContentProps) {
     openCreateModal();
   };
 
-  const handleSubmitQuery = () => {
-    const queryTitle = `Query | ${selectedItem?.question}`;
-    console.log('Creating query:', {
-      itemId: selectedItem?.id,
-      title: queryTitle,
-      description: queryDescription,
-    });
-    closeCreateModal();
-    setQueryDescription('');
-    setSelectedItem(null);
+  const handleSubmitQuery = async () => {
+    if (selectedItem && queryDescription.trim()) {
+      try {
+        // Convert mock FormData to API format for the create call
+        const apiFormData = {
+          id: selectedItem.id.toString(),
+          question: selectedItem.question,
+          answer: selectedItem.answer,
+        };
+        
+        await createQuery.execute(apiFormData, queryDescription.trim());
+        closeCreateModal();
+        setQueryDescription('');
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Failed to create query:', err);
+      }
+    }
   };
 
   const handleToggleExpansion = (itemId: number) => {
@@ -101,15 +124,15 @@ export function MainContent({ filter }: MainContentProps) {
     setEditingStatus(query.status);
   };
 
-  const handleSaveQuery = (queryId: number) => {
-    console.log('Saving query:', {
-      id: queryId,
-      description: editingDescription,
-      status: editingStatus,
-    });
-    setEditingQuery(null);
-    setEditingDescription('');
-    setEditingStatus('OPEN');
+  const handleSaveQuery = async (queryId: number) => {
+    try {
+      await updateQuery.execute(queryId.toString(), editingDescription, editingStatus);
+      setEditingQuery(null);
+      setEditingDescription('');
+      setEditingStatus('OPEN');
+    } catch (err) {
+      console.error('Failed to save query:', err);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -123,11 +146,15 @@ export function MainContent({ filter }: MainContentProps) {
     openDeleteModal();
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (queryToDelete) {
-      console.log('Deleting query:', queryToDelete.id);
-      closeDeleteModal();
-      setQueryToDelete(null);
+      try {
+        await deleteQuery.execute(queryToDelete.id.toString());
+        closeDeleteModal();
+        setQueryToDelete(null);
+      } catch (err) {
+        console.error('Failed to delete query:', err);
+      }
     }
   };
 
@@ -136,12 +163,17 @@ export function MainContent({ filter }: MainContentProps) {
     setQueryToDelete(null);
   };
 
-  // Data preparation
-  const filteredFormData = getFilteredFormData(filter);
-  const totalQueries = mockQueries.length;
+  // Data preparation with API data
+  const filteredFormData = getFilteredFormData(formData, queries, filter, getQueriesForFormData);
+  const totalQueries = queries.length;
   const filteredQueries = filter === 'All' 
-    ? mockQueries 
-    : mockQueries.filter(q => q.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
+    ? queries 
+    : queries.filter(q => q.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
+
+  // Create wrapper functions to match component interface
+  const getFilteredQueriesForComponent = (formDataId: number, filterType: FilterType): Query[] => {
+    return getFilteredQueries(formDataId, filterType, getQueriesForFormData);
+  };
 
   // Filter descriptions
   const getFilterDescription = () => {
@@ -155,6 +187,51 @@ export function MainContent({ filter }: MainContentProps) {
     if (filter === 'Resolved') return 'Resolved Queries';
     return 'All Queries';
   };
+
+  // Show loading state
+  if (loading && formData.length === 0) {
+    return (
+      <Container size="xl" px={0}>
+        <Box ta="center" py={80}>
+          <Loader size="lg" />
+          <Text size="sm" c="dimmed" mt="md">
+            Loading form responses and queries...
+          </Text>
+        </Box>
+      </Container>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Container size="xl" px={0}>
+        <Alert 
+          icon={<IconAlertCircle size={16} />} 
+          title="Error loading data" 
+          color="red"
+          variant="light"
+          style={{ margin: '20px 0' }}
+        >
+          <Text size="sm" mb="md">{error}</Text>
+          <Group gap="sm">
+            <Text size="xs" c="dimmed">
+              Please check your connection and try again.
+            </Text>
+            <Text 
+              size="xs" 
+              c="blue" 
+              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => refetch()}
+            >
+              <IconRefresh size={12} style={{ marginRight: 4 }} />
+              Retry
+            </Text>
+          </Group>
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container size="xl" px={0}>
@@ -185,7 +262,7 @@ export function MainContent({ filter }: MainContentProps) {
                 size={isMobile ? "xs" : "sm"}
                 fw={600}
               >
-                {filteredFormData.length} of {mockFormData.length} responses
+                {filteredFormData.length} of {formData.length} responses
               </Text>
               <Text 
                 size="10px"
@@ -235,7 +312,8 @@ export function MainContent({ filter }: MainContentProps) {
             onEditDescriptionChange={setEditingDescription}
             onEditStatusChange={setEditingStatus}
             getQueriesCount={getQueriesCount}
-            getFilteredQueries={getFilteredQueries}
+            getFilteredQueries={getFilteredQueriesForComponent}
+            isUpdating={updateQuery.loading}
           />
         )}
       </Stack>
@@ -248,6 +326,7 @@ export function MainContent({ filter }: MainContentProps) {
         queryDescription={queryDescription}
         onQueryDescriptionChange={setQueryDescription}
         onSubmit={handleSubmitQuery}
+        loading={createQuery.loading}
       />
 
       <DeleteQueryModal
@@ -255,6 +334,7 @@ export function MainContent({ filter }: MainContentProps) {
         onClose={handleCancelDelete}
         queryToDelete={queryToDelete}
         onConfirm={handleConfirmDelete}
+        loading={deleteQuery.loading}
       />
     </Container>
   );

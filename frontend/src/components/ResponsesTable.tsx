@@ -28,6 +28,9 @@ interface ResponsesTableProps {
   // Data helpers
   getQueriesCount: (formDataId: number, status?: 'OPEN' | 'RESOLVED') => number;
   getFilteredQueries: (formDataId: number, filter: 'All' | 'Open' | 'Resolved') => Query[];
+  
+  // Loading states
+  isUpdating?: boolean;
 }
 
 export function ResponsesTable({
@@ -47,6 +50,7 @@ export function ResponsesTable({
   onEditStatusChange,
   getQueriesCount,
   getFilteredQueries,
+  isUpdating = false,
 }: ResponsesTableProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -93,24 +97,25 @@ export function ResponsesTable({
         </Box>
 
         {/* Expanded queries for mobile */}
-        {getQueriesCount(item.id) > 0 && (
-          <Collapse in={expandedRow === item.id} transitionDuration={300}>
-            <QueriesTable
-              formData={item}
-              queries={getFilteredQueries(item.id, filter)}
-              editingQuery={editingQuery}
-              editingDescription={editingDescription}
-              editingStatus={editingStatus}
-              onEditQuery={onEditQuery}
-              onSaveQuery={onSaveQuery}
-              onCancelEdit={onCancelEdit}
-              onDeleteQuery={onDeleteQuery}
-              onCreateQuery={onCreateQuery}
-              onEditDescriptionChange={onEditDescriptionChange}
-              onEditStatusChange={onEditStatusChange}
-            />
-          </Collapse>
-        )}
+                 {getQueriesCount(item.id) > 0 && (
+           <Collapse in={expandedRow === item.id} transitionDuration={300}>
+             <QueriesTable
+               formData={item}
+               queries={getFilteredQueries(item.id, filter)}
+               editingQuery={editingQuery}
+               editingDescription={editingDescription}
+               editingStatus={editingStatus}
+               onEditQuery={onEditQuery}
+               onSaveQuery={onSaveQuery}
+               onCancelEdit={onCancelEdit}
+               onDeleteQuery={onDeleteQuery}
+               onCreateQuery={onCreateQuery}
+               onEditDescriptionChange={onEditDescriptionChange}
+               onEditStatusChange={onEditStatusChange}
+               isUpdating={isUpdating}
+             />
+           </Collapse>
+         )}
       </Stack>
     </Card>
   );
@@ -120,7 +125,7 @@ export function ResponsesTable({
     <React.Fragment key={item.id}>
       <Table.Tr 
         style={{ 
-          borderBottom: expandedRow === item.id ? 'none' : '1px solid light-dark(#e9ecef, #373a40)',
+          borderBottom: getQueriesCount(item.id) > 0 ? 'none' : '1px solid light-dark(#e9ecef, #373a40)',
           height: '80px',
         }}
       >
@@ -173,28 +178,29 @@ export function ResponsesTable({
       </Table.Tr>
             
       {/* Expanded queries sub-table with animations */}
-      {getQueriesCount(item.id) > 0 && (
-        <Table.Tr>
-          <Table.Td colSpan={3} style={{ padding: 0, border: 'none' }}>
-            <Collapse in={expandedRow === item.id} transitionDuration={300}>
-              <QueriesTable
-                formData={item}
-                queries={getFilteredQueries(item.id, filter)}
-                editingQuery={editingQuery}
-                editingDescription={editingDescription}
-                editingStatus={editingStatus}
-                onEditQuery={onEditQuery}
-                onSaveQuery={onSaveQuery}
-                onCancelEdit={onCancelEdit}
-                onDeleteQuery={onDeleteQuery}
-                onCreateQuery={onCreateQuery}
-                onEditDescriptionChange={onEditDescriptionChange}
-                onEditStatusChange={onEditStatusChange}
-              />
-            </Collapse>
-          </Table.Td>
-        </Table.Tr>
-      )}
+             {getQueriesCount(item.id) > 0 && (
+         <Table.Tr>
+           <Table.Td colSpan={3} style={{ padding: 0, border: 'none' }}>
+             <Collapse in={expandedRow === item.id} transitionDuration={300}>
+               <QueriesTable
+                 formData={item}
+                 queries={getFilteredQueries(item.id, filter)}
+                 editingQuery={editingQuery}
+                 editingDescription={editingDescription}
+                 editingStatus={editingStatus}
+                 onEditQuery={onEditQuery}
+                 onSaveQuery={onSaveQuery}
+                 onCancelEdit={onCancelEdit}
+                 onDeleteQuery={onDeleteQuery}
+                 onCreateQuery={onCreateQuery}
+                 onEditDescriptionChange={onEditDescriptionChange}
+                 onEditStatusChange={onEditStatusChange}
+                 isUpdating={isUpdating}
+               />
+             </Collapse>
+           </Table.Td>
+         </Table.Tr>
+       )}
     </React.Fragment>
   ));
 
@@ -223,15 +229,8 @@ export function ResponsesTable({
         <Table 
           verticalSpacing={0} 
           horizontalSpacing="xl"
-          style={{ 
-            minWidth: '800px',
-            tableLayout: 'fixed',
-            backgroundColor: 'light-dark(#ffffff, #25262b)',
-          }}
         >
-          <Table.Thead style={{
-            borderBottom: '2px solid light-dark(#e9ecef, #373a40)',
-          }}>
+          <Table.Thead>
             <Table.Tr style={{ height: '60px' }}>
               <Table.Th style={{ 
                 paddingTop: '18px', 

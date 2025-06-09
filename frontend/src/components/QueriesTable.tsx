@@ -19,6 +19,7 @@ interface QueriesTableProps {
   onCreateQuery: (formData: FormData) => void;
   onEditDescriptionChange: (value: string) => void;
   onEditStatusChange: (status: 'OPEN' | 'RESOLVED') => void;
+  isUpdating?: boolean;
 }
 
 export function QueriesTable({
@@ -34,6 +35,7 @@ export function QueriesTable({
   onCreateQuery,
   onEditDescriptionChange,
   onEditStatusChange,
+  isUpdating = false,
 }: QueriesTableProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -53,7 +55,7 @@ export function QueriesTable({
       style={{
         backgroundColor: 'light-dark(#f1f3f4, #2c2e33)',
         padding: '16px 24px',
-        borderBottom: '1px solid light-dark(#e9ecef, #373a40)',
+        borderBottom: 'none',
       }}
     >
       <Text 
@@ -188,6 +190,8 @@ export function QueriesTable({
                         variant="light"
                         size="sm"
                         onClick={() => onSaveQuery(query.id)}
+                        disabled={isUpdating}
+                        loading={isUpdating}
                       >
                         <IconDeviceFloppy size={14} />
                       </ActionIcon>
@@ -198,6 +202,7 @@ export function QueriesTable({
                         variant="light"
                         size="sm"
                         onClick={onCancelEdit}
+                        disabled={isUpdating}
                       >
                         <IconX size={14} />
                       </ActionIcon>

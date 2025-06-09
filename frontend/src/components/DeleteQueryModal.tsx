@@ -11,13 +11,15 @@ interface DeleteQueryModalProps {
   onClose: () => void;
   queryToDelete: Query | null;
   onConfirm: () => void;
+  loading?: boolean;
 }
 
 export function DeleteQueryModal({
   opened,
   onClose,
   queryToDelete,
-  onConfirm
+  onConfirm,
+  loading = false
 }: DeleteQueryModalProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -100,8 +102,10 @@ export function DeleteQueryModal({
           <Button 
             color="red"
             onClick={onConfirm}
+            disabled={loading}
+            loading={loading}
             size={isMobile ? "md" : "md"}
-            leftSection={<IconTrash size={16} />}
+            leftSection={!loading ? <IconTrash size={16} /> : undefined}
             fullWidth={isMobile}
             style={{ flex: isMobile ? 1 : 'none', minWidth: isMobile ? 'auto' : '140px' }}
           >
