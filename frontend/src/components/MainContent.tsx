@@ -2,73 +2,66 @@
 
 import React from 'react';
 import { Box, Text, Stack, Card, Table, Badge, Container, Group, ActionIcon, Tooltip, Modal, Textarea, Button, Collapse, Transition, TextInput, Checkbox, SimpleGrid } from '@mantine/core';
-import { IconPlus, IconQuestionMark, IconCheck, IconChevronDown, IconChevronRight, IconPencil, IconDeviceFloppy, IconX } from '@tabler/icons-react';
+import { IconPlus, IconQuestionMark, IconCheck, IconChevronDown, IconChevronRight, IconPencil, IconDeviceFloppy, IconX, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { FilterType } from './AppLayout';
 
-import { mockQueries, type QueryDetail } from '../data/mockQueries';
+import { mockFormData, mockQueries, type FormData, type Query } from '../data/mockQueries';
 
 interface MainContentProps {
   filter: FilterType;
 }
 
-const mockFormData = [
-  {
-    id: 1,
-    question: "Do you have a family history of cancer?",
-    answer: "Yes, my mother had breast cancer at age 55.",
-    queryStatus: "OPEN" as const,
-    queryCount: 2
-  },
-  {
-    id: 2,
-    question: "What medications are you currently taking?",
-    answer: "Lisinopril 10mg daily, Metformin 500mg twice daily, Vitamin D3 1000 IU daily.",
-    queryStatus: "RESOLVED" as const,
-    queryCount: 1
-  },
-  {
-    id: 3,
-    question: "Have you experienced any adverse reactions to medications?",
-    answer: "I had a mild rash from penicillin when I was younger.",
-    queryStatus: "OPEN" as const,
-    queryCount: 1
-  },
-  {
-    id: 4,
-    question: "Do you smoke or use tobacco products?",
-    answer: "No, I quit smoking 5 years ago after smoking for 15 years.",
-    queryStatus: "RESOLVED" as const,
-    queryCount: 0
-  },
-  {
-    id: 5,
-    question: "How many alcoholic drinks do you consume per week?",
-    answer: "Usually 2-3 glasses of wine on weekends.",
-    queryStatus: "OPEN" as const,
-    queryCount: 3
-  },
-  {
-    id: 6,
-    question: "Do you exercise regularly?",
-    answer: "Yes, I go to the gym 3 times a week and walk daily.",
-    queryStatus: "RESOLVED" as const,
-    queryCount: 0
+// Helper functions for filtering data
+const getQueriesForFormData = (formDataId: number): Query[] => {
+  return mockQueries.filter(query => query.formDataId === formDataId);
+};
+
+const getQueriesCount = (formDataId: number, status?: 'OPEN' | 'RESOLVED'): number => {
+  const queries = getQueriesForFormData(formDataId);
+  if (status) {
+    return queries.filter(query => query.status === status).length;
   }
-];
+  return queries.length;
+};
+
+const getFilteredFormData = (filter: FilterType): FormData[] => {
+  if (filter === 'All') {
+    return mockFormData;
+  }
+  
+  // For Open/Resolved filters, only show form data that has queries with that status
+  return mockFormData.filter(formData => {
+    const queries = getQueriesForFormData(formData.id);
+    return queries.some(query => query.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
+  });
+};
+
+const getFilteredQueries = (formDataId: number, filter: FilterType): Query[] => {
+  const queries = getQueriesForFormData(formDataId);
+  
+  if (filter === 'All') {
+    return queries;
+  }
+  
+  // For Open/Resolved filters, only show queries with that status
+  return queries.filter(query => query.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
+};
 
 export function MainContent({ filter }: MainContentProps) {
   const [opened, { open, close }] = useDisclosure(false);
-  const [selectedItem, setSelectedItem] = useState<typeof mockFormData[0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<FormData | null>(null);
   const [queryDescription, setQueryDescription] = useState('');
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [editingQuery, setEditingQuery] = useState<number | null>(null);
   const [editingDescription, setEditingDescription] = useState('');
   const [editingStatus, setEditingStatus] = useState<'OPEN' | 'RESOLVED'>('OPEN');
+  const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure(false);
+  const [queryToDelete, setQueryToDelete] = useState<Query | null>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const handleCreateQuery = (item: typeof mockFormData[0]) => {
+  const handleCreateQuery = (item: FormData) => {
     setSelectedItem(item);
     setQueryDescription('');
     open();
@@ -105,9 +98,9 @@ export function MainContent({ filter }: MainContentProps) {
     }).format(date);
   };
 
-  const handleEditQuery = (query: QueryDetail) => {
+  const handleEditQuery = (query: Query) => {
     setEditingQuery(query.id);
-    setEditingDescription(query.description);
+    setEditingDescription(query.description || '');
     setEditingStatus(query.status);
   };
 
@@ -129,9 +122,31 @@ export function MainContent({ filter }: MainContentProps) {
     setEditingStatus('OPEN');
   };
 
-  const getQueryDisplay = (item: typeof mockFormData[0]) => {
-    // If no queries exist, show create query button in chevron position
-    if (item.queryCount === 0) {
+  const handleDeleteQuery = (query: Query) => {
+    setQueryToDelete(query);
+    openDeleteModal();
+  };
+
+  const confirmDeleteQuery = () => {
+    if (queryToDelete) {
+      console.log('Deleting query:', queryToDelete.id);
+      // Here you would typically make an API call to delete the query
+      closeDeleteModal();
+      setQueryToDelete(null);
+    }
+  };
+
+  const cancelDeleteQuery = () => {
+    closeDeleteModal();
+    setQueryToDelete(null);
+  };
+
+  const getQueryDisplay = (item: FormData) => {
+    const totalQueries = getQueriesCount(item.id);
+    const filteredQueries = getFilteredQueries(item.id, filter);
+    
+    // If no queries exist for this form data, show create query button
+    if (totalQueries === 0) {
       return (
         <Box style={{ 
           display: 'flex',
@@ -150,7 +165,7 @@ export function MainContent({ filter }: MainContentProps) {
             onClick={() => handleCreateQuery(item)}
             style={{ 
               fontSize: isMobile ? '12px' : '14px',
-              fontFamily: 'Euclid Circular A, sans-serif',
+              
               fontWeight: 600,
             }}
           >
@@ -160,10 +175,9 @@ export function MainContent({ filter }: MainContentProps) {
       );
     }
 
-    // If queries exist, show status with appropriate icon and chevron
-    const isOpen = item.queryStatus === 'OPEN';
-    const statusColor = isOpen ? 'red' : 'green';
-    const StatusIcon = isOpen ? IconQuestionMark : IconCheck;
+    // Show query status information
+    const openQueries = getQueriesCount(item.id, 'OPEN');
+    const resolvedQueries = getQueriesCount(item.id, 'RESOLVED');
     const isExpanded = expandedRow === item.id;
 
     return (
@@ -171,35 +185,78 @@ export function MainContent({ filter }: MainContentProps) {
         display: 'flex',
         flexDirection: 'row',
         gap: isMobile ? '8px' : '12px',
-        height: '40px',
+        minHeight: '40px',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
         width: '100%',
+        overflow: 'hidden',
       }}>
         <Box style={{ 
           display: 'flex',
           flexDirection: 'column',
-          gap: '8px',
+          gap: '4px',
+          minWidth: 0, // Allow shrinking
+          flex: 1, // Take available space
         }}>
-          <Badge 
-            color={statusColor} 
-            variant="light" 
-            size={isMobile ? 'xs' : 'sm'} 
-            radius="md"
-            leftSection={<StatusIcon size={isMobile ? 10 : 12} />}
-          >
-            {item.queryStatus}
-          </Badge>
+          {/* Show badges based on filter */}
+          {filter === 'All' && (
+            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+              {openQueries > 0 && (
+                <Badge 
+                  color="red" 
+                  variant="light" 
+                  size="xs"
+                  radius="md"
+                  style={{ 
+                    whiteSpace: 'nowrap', 
+                    flexShrink: 0,
+                    fontSize: '10px',
+                    height: '20px',
+                    minWidth: 'fit-content',
+                  }}
+                >
+                  {openQueries} Open
+                </Badge>
+              )}
+              {resolvedQueries > 0 && (
+                <Badge 
+                  color="green" 
+                  variant="light" 
+                  size="xs"
+                  radius="md"
+                  style={{ 
+                    whiteSpace: 'nowrap', 
+                    flexShrink: 0,
+                    fontSize: '10px',
+                    height: '20px',
+                    minWidth: 'fit-content',
+                  }}
+                >
+                  {resolvedQueries} Resolved
+                </Badge>
+              )}
+            </Group>
+          )}
+          {filter === 'Open' && openQueries > 0 && (
+            <Badge color="red" variant="light" size={isMobile ? 'xs' : 'sm'} radius="md">
+              {openQueries} Open {openQueries === 1 ? 'Query' : 'Queries'}
+            </Badge>
+          )}
+          {filter === 'Resolved' && resolvedQueries > 0 && (
+            <Badge color="green" variant="light" size={isMobile ? 'xs' : 'sm'} radius="md">
+              {resolvedQueries} Resolved {resolvedQueries === 1 ? 'Query' : 'Queries'}
+            </Badge>
+          )}
+          
           <Text 
             size={isMobile ? '10px' : 'xs'} 
-            c="rgb(67, 75, 86)" 
+            c="dimmed"
             fw={600}
             style={{ 
-              fontFamily: 'Euclid Circular A, sans-serif',
-              opacity: 0.6,
+              
             }}
           >
-            {item.queryCount} {item.queryCount === 1 ? 'query' : 'queries'}
+            {totalQueries} total {totalQueries === 1 ? 'query' : 'queries'}
           </Text>
         </Box>
         
@@ -218,24 +275,19 @@ export function MainContent({ filter }: MainContentProps) {
     );
   };
 
-  // Filter data based on the selected filter
-  const filteredData = mockFormData.filter(item => {
-    if (filter === 'All') return true;
-    if (filter === 'Open') return item.queryStatus === 'OPEN';
-    if (filter === 'Resolved') return item.queryStatus === 'RESOLVED';
-    return true;
-  });
+  // Get filtered data
+  const filteredFormData = getFilteredFormData(filter);
 
   // Mobile Card Layout
-  const MobileCard = ({ item }: { item: typeof mockFormData[0] }) => (
+  const MobileCard = ({ item }: { item: FormData }) => (
     <Card 
       key={item.id}
       shadow="sm" 
       padding="md"
       radius="lg"
       style={{
-        backgroundColor: 'white',
-        border: '1px solid var(--mantine-color-gray-2)',
+        backgroundColor: 'light-dark(#ffffff, #25262b)',
+        border: '1px solid light-dark(#e9ecef, #373a40)',
         marginBottom: '12px',
       }}
     >
@@ -243,10 +295,9 @@ export function MainContent({ filter }: MainContentProps) {
         <Text 
           size="sm" 
           fw={600} 
-          c="rgb(67, 75, 86)" 
           lh={1.4}
           style={{ 
-            fontFamily: 'Euclid Circular A, sans-serif',
+            
           }}
         >
           {item.question}
@@ -254,11 +305,10 @@ export function MainContent({ filter }: MainContentProps) {
         
         <Text 
           size="xs" 
-          c="rgb(67, 75, 86)" 
+          c="dimmed"
           lh={1.4}
           style={{ 
-            fontFamily: 'Euclid Circular A, sans-serif',
-            opacity: 0.8,
+            
           }}
         >
           {item.answer}
@@ -270,11 +320,11 @@ export function MainContent({ filter }: MainContentProps) {
         </Box>
 
         {/* Expanded queries for mobile */}
-        {mockQueries[item.id] && (
+        {getQueriesCount(item.id) > 0 && (
           <Collapse in={expandedRow === item.id} transitionDuration={300}>
             <Box 
               style={{
-                backgroundColor: 'var(--mantine-color-gray-0)', 
+                backgroundColor: 'light-dark(#f1f3f4, #2c2e33)',
                 padding: '12px',
                 borderRadius: '8px',
                 marginTop: '8px',
@@ -283,18 +333,15 @@ export function MainContent({ filter }: MainContentProps) {
               <Text 
                 size="xs" 
                 fw={600} 
-                c="rgb(67, 75, 86)" 
                 mb="sm"
-                style={{ 
-                  fontFamily: 'Euclid Circular A, sans-serif',
-                }}
+                
               >
                 Query Details
               </Text>
               
               <Stack gap="sm">
-                {mockQueries[item.id].map((query) => (
-                  <Card key={query.id} padding="xs" style={{ backgroundColor: 'white' }}>
+                {getFilteredQueries(item.id, filter).map((query) => (
+                  <Card key={query.id} padding="xs" style={{ backgroundColor: 'light-dark(#ffffff, #25262b)' }}>
                     <Stack gap="xs">
                       <Group justify="space-between" align="flex-start">
                         <Badge 
@@ -304,14 +351,24 @@ export function MainContent({ filter }: MainContentProps) {
                         >
                           {query.status}
                         </Badge>
-                        <ActionIcon
-                          color="blue"
-                          variant="light"
-                          size="xs"
-                          onClick={() => handleEditQuery(query)}
-                        >
-                          <IconPencil size={12} />
-                        </ActionIcon>
+                        <Group gap="xs">
+                          <ActionIcon
+                            color="blue"
+                            variant="light"
+                            size="xs"
+                            onClick={() => handleEditQuery(query)}
+                          >
+                            <IconPencil size={12} />
+                          </ActionIcon>
+                          <ActionIcon
+                            color="red"
+                            variant="light"
+                            size="xs"
+                            onClick={() => handleDeleteQuery(query)}
+                          >
+                            <IconTrash size={12} />
+                          </ActionIcon>
+                        </Group>
                       </Group>
                       
                       {editingQuery === query.id ? (
@@ -384,7 +441,7 @@ export function MainContent({ filter }: MainContentProps) {
                 mt="sm"
                 style={{ 
                   fontSize: '12px',
-                  fontFamily: 'Euclid Circular A, sans-serif',
+                  
                   fontWeight: 600,
                 }}
               >
@@ -398,11 +455,11 @@ export function MainContent({ filter }: MainContentProps) {
   );
 
   // Desktop Table Layout
-  const rows = filteredData.map((item) => (
+  const rows = filteredFormData.map((item) => (
     <React.Fragment key={item.id}>
       <Table.Tr 
         style={{ 
-          borderBottom: expandedRow === item.id ? 'none' : '1px solid var(--mantine-color-gray-2)',
+          borderBottom: expandedRow === item.id ? 'none' : '1px solid light-dark(#e9ecef, #373a40)',
           height: '80px',
         }}
       >
@@ -416,9 +473,8 @@ export function MainContent({ filter }: MainContentProps) {
           <Text 
             size="sm" 
             fw={500} 
-            c="rgb(67, 75, 86)" 
             lh={1.5}
-            style={{ fontFamily: 'Euclid Circular A, sans-serif' }}
+            
           >
             {item.question}
           </Text>
@@ -432,11 +488,10 @@ export function MainContent({ filter }: MainContentProps) {
         }}>
           <Text 
             size="sm" 
-            c="rgb(67, 75, 86)" 
+            c="dimmed"
             lh={1.5}
             style={{ 
-              fontFamily: 'Euclid Circular A, sans-serif',
-              opacity: 0.8,
+              
             }}
           >
             {item.answer}
@@ -454,29 +509,28 @@ export function MainContent({ filter }: MainContentProps) {
       </Table.Tr>
             
       {/* Expanded queries sub-table with animations */}
-      {mockQueries[item.id] && (
+      {getQueriesCount(item.id) > 0 && (
         <Table.Tr>
           <Table.Td colSpan={3} style={{ padding: 0, border: 'none' }}>
             <Collapse in={expandedRow === item.id} transitionDuration={300}>
               <Box 
                 style={{
-                  backgroundColor: 'var(--mantine-color-gray-0)', 
+                  backgroundColor: 'light-dark(#f1f3f4, #2c2e33)',
                   padding: '16px 24px',
-                  borderBottom: '1px solid var(--mantine-color-gray-2)',
+                  borderBottom: '1px solid light-dark(#e9ecef, #373a40)',
                 }}
               >
                 <Text 
                   size="sm" 
                   fw={600} 
-                  c="rgb(67, 75, 86)" 
                   mb="md"
                   style={{ 
-                    fontFamily: 'Euclid Circular A, sans-serif',
+                    
                   }}
                 >
                   Query Details
                 </Text>
-                <Table style={{ backgroundColor: 'white', fontSize: '14px' }}>
+                <Table style={{ fontSize: '14px', backgroundColor: 'light-dark(#ffffff, #25262b)' }}>
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th style={{ width: '40%' }}>Description</Table.Th>
@@ -487,9 +541,13 @@ export function MainContent({ filter }: MainContentProps) {
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {mockQueries[item.id].map((query) => (
+                    {getFilteredQueries(item.id, filter).map((query) => (
                       <Table.Tr key={query.id}>
-                        <Table.Td>
+                        <Table.Td style={{ 
+                          paddingTop: '16px', 
+                          paddingBottom: '16px',
+                          verticalAlign: 'top',
+                        }}>
                           {editingQuery === query.id ? (
                             <TextInput
                               value={editingDescription}
@@ -504,17 +562,26 @@ export function MainContent({ filter }: MainContentProps) {
                             </Text>
                           )}
                         </Table.Td>
-                        <Table.Td>
+                        <Table.Td style={{ 
+                          paddingTop: '16px', 
+                          paddingBottom: '16px',
+                        }}>
                           <Text size="xs" c="gray.6">
                             {formatDate(query.createdAt)}
                           </Text>
                         </Table.Td>
-                        <Table.Td>
+                        <Table.Td style={{ 
+                          paddingTop: '16px', 
+                          paddingBottom: '16px',
+                        }}>
                           <Text size="xs" c="gray.6">
                             {formatDate(query.updatedAt)}
                           </Text>
                         </Table.Td>
-                        <Table.Td>
+                        <Table.Td style={{ 
+                          paddingTop: '16px', 
+                          paddingBottom: '16px',
+                        }}>
                           {editingQuery === query.id ? (
                             <Group gap="xs" align="center">
                               <Checkbox
@@ -540,7 +607,10 @@ export function MainContent({ filter }: MainContentProps) {
                             </Badge>
                           )}
                         </Table.Td>
-                        <Table.Td>
+                        <Table.Td style={{ 
+                          paddingTop: '16px', 
+                          paddingBottom: '16px',
+                        }}>
                           {editingQuery === query.id ? (
                             <Group gap="xs">
                               <Tooltip label="Save changes">
@@ -565,16 +635,38 @@ export function MainContent({ filter }: MainContentProps) {
                               </Tooltip>
                             </Group>
                           ) : (
-                            <Tooltip label="Edit query">
-                              <ActionIcon
-                                color="blue"
-                                variant="light"
-                                size="sm"
-                                onClick={() => handleEditQuery(query)}
-                              >
-                                <IconPencil size={14} />
-                              </ActionIcon>
-                            </Tooltip>
+                            <Group gap={4} wrap="nowrap" justify="center" style={{ width: '100%' }}>
+                              <Tooltip label="Edit query">
+                                <ActionIcon
+                                  color="blue"
+                                  variant="light"
+                                  size="xs"
+                                  onClick={() => handleEditQuery(query)}
+                                  style={{ 
+                                    flexShrink: 0,
+                                    minWidth: '28px',
+                                    height: '28px',
+                                  }}
+                                >
+                                  <IconPencil size={12} />
+                                </ActionIcon>
+                              </Tooltip>
+                              <Tooltip label="Delete query">
+                                <ActionIcon
+                                  color="red"
+                                  variant="light"
+                                  size="xs"
+                                  onClick={() => handleDeleteQuery(query)}
+                                  style={{ 
+                                    flexShrink: 0,
+                                    minWidth: '28px',
+                                    height: '28px',
+                                  }}
+                                >
+                                  <IconTrash size={12} />
+                                </ActionIcon>
+                              </Tooltip>
+                            </Group>
                           )}
                         </Table.Td>
                       </Table.Tr>
@@ -585,7 +677,7 @@ export function MainContent({ filter }: MainContentProps) {
                 {/* Create Query Button at bottom of expanded queries */}
                 <Box style={{ 
                   padding: '16px 0 8px 0',
-                  borderTop: '1px solid var(--mantine-color-gray-2)',
+                  borderTop: '1px solid light-dark(#e9ecef, #373a40)',
                   marginTop: '16px',
                   display: 'flex',
                   justifyContent: 'center',
@@ -598,7 +690,7 @@ export function MainContent({ filter }: MainContentProps) {
                     onClick={() => handleCreateQuery(item)}
                     style={{ 
                       fontSize: '14px',
-                      fontFamily: 'Euclid Circular A, sans-serif',
+                      
                       fontWeight: 600,
                     }}
                   >
@@ -614,8 +706,8 @@ export function MainContent({ filter }: MainContentProps) {
   ));
 
   const getFilterDescription = () => {
-    if (filter === 'Open') return 'Queries that require attention and follow-up.';
-    if (filter === 'Resolved') return 'Queries that have been addressed and completed.';
+    if (filter === 'Open') return 'Form responses with open queries that require attention and follow-up.';
+    if (filter === 'Resolved') return 'Form responses with resolved queries that have been addressed and completed.';
     return 'All patient form responses and their associated queries.';
   };
 
@@ -624,6 +716,12 @@ export function MainContent({ filter }: MainContentProps) {
     if (filter === 'Resolved') return 'Resolved Queries';
     return 'All Queries';
   };
+
+  // Calculate total queries for display
+  const totalQueries = mockQueries.length;
+  const filteredQueries = filter === 'All' 
+    ? mockQueries 
+    : mockQueries.filter(q => q.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
 
   return (
     <Container size="xl" px={0}>
@@ -634,67 +732,54 @@ export function MainContent({ filter }: MainContentProps) {
               <Text 
                 size={isMobile ? "xl" : "2.25rem"}
                 fw={700} 
-                c="rgb(67, 75, 86)" 
                 mb="xs" 
                 lh={1.2}
-                style={{ fontFamily: 'Euclid Circular A, sans-serif' }}
+                
               >
                 {getFilterTitle()}
               </Text>
               <Text 
                 size={isMobile ? "sm" : "lg"}
-                c="rgb(67, 75, 86)" 
+                c="dimmed"
                 lh={1.5} 
                 maw={isMobile ? 300 : 600}
-                style={{ 
-                  fontFamily: 'Euclid Circular A, sans-serif',
-                  opacity: 0.7,
-                }}
+                
               >
                 {getFilterDescription()}
               </Text>
             </Box>
-            <Box ta="right">
+            <Box ta={isMobile ? "left" : "right"}>
               <Text 
                 size={isMobile ? "xs" : "sm"}
-                c="rgb(67, 75, 86)" 
                 fw={600}
-                style={{ 
-                  fontFamily: 'Euclid Circular A, sans-serif',
-                }}
+                
               >
-                {filteredData.length} of {mockFormData.length} entries
+                {filteredFormData.length} of {mockFormData.length} responses
               </Text>
-              {filter !== 'All' && (
-                <Text 
-                  size="10px"
-                  c="rgb(67, 75, 86)" 
-                  mt={2}
-                  style={{ 
-                    fontFamily: 'Euclid Circular A, sans-serif',
-                    opacity: 0.6,
-                  }}
-                >
-                  Filtered by {filter.toLowerCase()} status
-                </Text>
-              )}
+              <Text 
+                size="10px"
+                c="dimmed"
+                mt={2}
+              >
+                {filteredQueries.length} of {totalQueries} queries
+              </Text>
             </Box>
           </Group>
         </Box>
         
-        {filteredData.length === 0 ? (
+        {filteredFormData.length === 0 ? (
           <Card 
             shadow="sm" 
             padding={isMobile ? "md" : "xl"}
             radius="lg"
             style={{
-              backgroundColor: 'white',
-              border: '1px solid var(--mantine-color-gray-2)',
+              backgroundColor: 'light-dark(#ffffff, #25262b)',
+              border: '1px solid light-dark(#e9ecef, #373a40)',
             }}
           >
             <Box ta="center" py={isMobile ? 40 : 80}>
               <Text size={isMobile ? "lg" : "xl"} c="gray.5" fw={500} mb="xs">
-                No {filter.toLowerCase()} queries found
+                No form responses with {filter.toLowerCase()} queries found
               </Text>
               <Text size="sm" c="gray.4">
                 Try selecting a different filter to view more data
@@ -706,7 +791,7 @@ export function MainContent({ filter }: MainContentProps) {
             {/* Mobile View - Cards */}
             {isMobile ? (
               <Stack gap="xs">
-                {filteredData.map((item) => (
+                {filteredFormData.map((item) => (
                   <MobileCard key={item.id} item={item} />
                 ))}
               </Stack>
@@ -717,8 +802,8 @@ export function MainContent({ filter }: MainContentProps) {
                 padding={0}
                 radius="lg"
                 style={{
-                  backgroundColor: 'white',
-                  border: '1px solid var(--mantine-color-gray-2)',
+                  backgroundColor: 'light-dark(#ffffff, #25262b)',
+                  border: '1px solid light-dark(#e9ecef, #373a40)',
                   overflow: 'hidden',
                 }}
               >
@@ -728,13 +813,12 @@ export function MainContent({ filter }: MainContentProps) {
                     horizontalSpacing="xl"
                     style={{ 
                       minWidth: '800px',
-                      backgroundColor: 'white',
                       tableLayout: 'fixed',
+                      backgroundColor: 'light-dark(#ffffff, #25262b)',
                     }}
                   >
                     <Table.Thead style={{
-                      backgroundColor: '#ffffff',
-                      borderBottom: '2px solid var(--mantine-color-gray-2)',
+                      borderBottom: '2px solid light-dark(#e9ecef, #373a40)',
                     }}>
                       <Table.Tr style={{ height: '60px' }}>
                         <Table.Th style={{ 
@@ -742,11 +826,10 @@ export function MainContent({ filter }: MainContentProps) {
                           paddingBottom: '18px',
                           fontWeight: 600,
                           fontSize: '14px',
-                          color: 'rgb(67, 75, 86)',
                           letterSpacing: '0.5px',
                           textTransform: 'uppercase',
-                          fontFamily: 'Euclid Circular A, sans-serif',
-                          width: '35%',
+                          
+                          width: '32%',
                         }}>
                           Question Column
                         </Table.Th>
@@ -755,11 +838,10 @@ export function MainContent({ filter }: MainContentProps) {
                           paddingBottom: '18px',
                           fontWeight: 600,
                           fontSize: '14px',
-                          color: 'rgb(67, 75, 86)',
                           letterSpacing: '0.5px',
                           textTransform: 'uppercase',
-                          fontFamily: 'Euclid Circular A, sans-serif',
-                          width: '45%',
+                          
+                          width: '40%',
                         }}>
                           Answer Column
                         </Table.Th>
@@ -768,11 +850,10 @@ export function MainContent({ filter }: MainContentProps) {
                           paddingBottom: '18px',
                           fontWeight: 600,
                           fontSize: '14px',
-                          color: 'rgb(67, 75, 86)',
                           letterSpacing: '0.5px',
                           textTransform: 'uppercase',
-                          fontFamily: 'Euclid Circular A, sans-serif',
-                          width: '20%',
+                          
+                          width: '28%',
                         }}>
                           Queries Column
                         </Table.Th>
@@ -801,12 +882,13 @@ export function MainContent({ filter }: MainContentProps) {
         padding={isMobile ? "md" : "xl"}
         styles={{
           header: {
-            backgroundColor: 'var(--mantine-color-gray-0)',
-            borderBottom: '1px solid var(--mantine-color-gray-2)',
+            backgroundColor: 'light-dark(#f8f9fa, #2c2e33)',
+            borderBottom: '1px solid light-dark(#e9ecef, #373a40)',
             borderRadius: isMobile ? 0 : '12px 12px 0 0',
             padding: isMobile ? '16px' : '20px 24px',
           },
           body: {
+            backgroundColor: 'light-dark(#ffffff, #25262b)',
             padding: isMobile ? '16px' : '24px',
             height: isMobile ? 'calc(100vh - 60px)' : 'auto',
             overflowY: isMobile ? 'auto' : 'visible',
@@ -815,28 +897,28 @@ export function MainContent({ filter }: MainContentProps) {
       >
         <Stack gap={isMobile ? "md" : "xl"} style={{ height: isMobile ? '100%' : 'auto' }}>
           <Box
+            bg="var(--mantine-color-blue-light)"
             style={{
-              backgroundColor: 'var(--mantine-color-blue-0)',
-              border: '1px solid var(--mantine-color-blue-2)',
+              border: '1px solid var(--mantine-color-blue-outline)',
               borderRadius: '8px',
               padding: isMobile ? '12px' : '16px',
             }}
           >
             <Group gap="sm" mb="sm">
-              <Text size={isMobile ? "xs" : "sm"} fw={600} c="blue.7">
+              <Text size={isMobile ? "xs" : "sm"} fw={600} c="blue">
                 Query Context
               </Text>
             </Group>
-            <Text size={isMobile ? "xs" : "sm"} c="gray.7" lh={1.5} mb="sm">
+            <Text size={isMobile ? "xs" : "sm"} lh={1.5} mb="sm">
               {selectedItem?.question}
             </Text>
-            <Text size="10px" c="gray.5" style={{ fontStyle: 'italic' }}>
+            <Text size="10px" c="dimmed" style={{ fontStyle: 'italic' }}>
               Title: Query | {selectedItem?.question}
             </Text>
           </Box>
 
           <Box style={{ flex: isMobile ? 1 : 'none' }}>
-            <Text size={isMobile ? "xs" : "sm"} fw={500} mb="xs" c="gray.8">
+            <Text size={isMobile ? "xs" : "sm"} fw={500} mb="xs">
               Query Description <Text span c="red">*</Text>
             </Text>
             <Textarea
@@ -854,7 +936,7 @@ export function MainContent({ filter }: MainContentProps) {
                 },
               }}
             />
-            <Text size="10px" c="gray.5" mt="xs">
+            <Text size="10px" c="dimmed" mt="xs">
               Provide clear details about what additional information is needed.
             </Text>
           </Box>
@@ -863,9 +945,9 @@ export function MainContent({ filter }: MainContentProps) {
             marginTop: isMobile ? 'auto' : 'unset',
             position: isMobile ? 'sticky' : 'static',
             bottom: isMobile ? 0 : 'auto',
-            backgroundColor: 'white',
+            backgroundColor: 'light-dark(#ffffff, #25262b)',
             paddingTop: isMobile ? '16px' : '0',
-            borderTop: isMobile ? '1px solid var(--mantine-color-gray-2)' : 'none',
+            borderTop: isMobile ? '1px solid light-dark(#e9ecef, #373a40)' : 'none',
           }}>
             <Button 
               variant="subtle" 
@@ -886,6 +968,96 @@ export function MainContent({ filter }: MainContentProps) {
               style={{ flex: isMobile ? 1 : 'none', minWidth: isMobile ? 'auto' : '140px' }}
             >
               Create Query
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* Delete Query Confirmation Modal */}
+      <Modal 
+        opened={deleteModalOpened} 
+        onClose={closeDeleteModal} 
+        title={
+          <Text size={isMobile ? "md" : "lg"} fw={600} c="red">Delete Query</Text>
+        }
+        size={isMobile ? "100%" : "md"}
+        fullScreen={isMobile}
+        centered={!isMobile}
+        radius={isMobile ? 0 : "lg"}
+        padding={isMobile ? "md" : "xl"}
+        styles={{
+          header: {
+            backgroundColor: 'light-dark(#fff5f5, #2c2e33)',
+            borderBottom: '1px solid light-dark(#f8d7da, #373a40)',
+            borderRadius: isMobile ? 0 : '12px 12px 0 0',
+            padding: isMobile ? '16px' : '20px 24px',
+          },
+          body: {
+            backgroundColor: 'light-dark(#ffffff, #25262b)',
+            padding: isMobile ? '16px' : '24px',
+          },
+        }}
+      >
+        <Stack gap="lg">
+          <Box
+            bg="light-dark(#fff5f5, #2c2121)"
+            style={{
+              border: '1px solid light-dark(#f8d7da, #5c2929)',
+              borderRadius: '8px',
+              padding: isMobile ? '12px' : '16px',
+            }}
+          >
+            <Group gap="sm" mb="sm">
+              <IconTrash size={20} color="var(--mantine-color-red-6)" />
+              <Text size={isMobile ? "sm" : "md"} fw={600} c="red">
+                Confirm Deletion
+              </Text>
+            </Group>
+            <Text size={isMobile ? "xs" : "sm"} lh={1.5} mb="sm">
+              Are you sure you want to delete this query? This action cannot be undone.
+            </Text>
+            {queryToDelete && (
+              <Box 
+                bg="light-dark(#f8f9fa, #1a1b1e)"
+                style={{
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  border: '1px solid light-dark(#e9ecef, #373a40)',
+                }}
+              >
+                <Text size="10px" c="dimmed" mb="xs" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Query to Delete:
+                </Text>
+                <Text size="xs" fw={500} mb="xs">
+                  {queryToDelete.title}
+                </Text>
+                <Text size="xs" c="dimmed" style={{ fontStyle: 'italic' }}>
+                  "{queryToDelete.description}"
+                </Text>
+              </Box>
+            )}
+          </Box>
+
+          <Group justify="space-between" pt="sm">
+            <Button 
+              variant="subtle" 
+              color="gray"
+              onClick={cancelDeleteQuery}
+              size={isMobile ? "md" : "md"}
+              fullWidth={isMobile}
+              style={{ flex: isMobile ? 1 : 'none', marginRight: isMobile ? '8px' : '0' }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              color="red"
+              onClick={confirmDeleteQuery}
+              size={isMobile ? "md" : "md"}
+              leftSection={<IconTrash size={16} />}
+              fullWidth={isMobile}
+              style={{ flex: isMobile ? 1 : 'none', minWidth: isMobile ? 'auto' : '140px' }}
+            >
+              Delete Query
             </Button>
           </Group>
         </Stack>

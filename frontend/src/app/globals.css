@@ -7,8 +7,8 @@
 
 html, body {
   height: 100%;
+  background-color: light-dark(#f8f9fa, #1a1b1e);
+  color: light-dark(#212529, #f8f9fa);
 }
 
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-}
+/* Font is applied via Next.js font optimization in layout.tsx */

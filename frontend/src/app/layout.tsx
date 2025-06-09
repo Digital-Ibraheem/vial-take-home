@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { ColorSchemeScript } from '@mantine/core';
 import { ThemeProvider } from '../components/ThemeProvider';
+import { Inter } from 'next/font/google';
 import '@mantine/core/styles.css';
 import './globals.css';
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "Query Management",
@@ -19,7 +25,7 @@ export default function RootLayout({
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
-      <body>
+      <body className={inter.className}>
         <ThemeProvider>
           {children}
         </ThemeProvider>

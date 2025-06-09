@@ -3,6 +3,7 @@
 import { AppShell, Text, Burger, Group, Paper, Collapse, Box } from '@mantine/core';
 import { useState } from 'react';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useComputedColorScheme } from '@mantine/core';
 import { Navigation } from './Navigation';
 import { MainContent } from './MainContent';
 
@@ -16,6 +17,19 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
   const [mobileNavOpened, { toggle: toggleMobileNav, close: closeMobileNav }] = useDisclosure(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const colorScheme = useComputedColorScheme('light');
+
+  const Logo = ({ height }: { height: string }) => (
+    <Box
+      component="img"
+      src={colorScheme === 'dark' ? '/vial-logo-white.svg' : '/vial-logo.svg'}
+      alt="Vial Logo"
+      style={{
+        height,
+        width: 'auto',
+      }}
+    />
+  );
 
   const handleFilterChange = (filter: FilterType) => {
     setActiveFilter(filter);
@@ -36,24 +50,27 @@ export function AppLayout({ children }: AppLayoutProps) {
             right: 0,
             height: 60,
             zIndex: 200,
-            backgroundColor: 'white',
-            borderBottom: '1px solid var(--mantine-color-gray-2)',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'light-dark(#ffffff, #25262b)',
+            borderBottom: '1px solid light-dark(#e9ecef, #373a40)',
+            boxShadow: 'light-dark(0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.3))',
           }}
         >
-          <Group justify="space-between" h="100%" px="md">
-            <Text 
-              size="lg" 
-              fw={600}
-              style={{ fontFamily: 'Euclid Circular A, sans-serif' }}
-            >
-              Query Manager
-            </Text>
-            <Burger
-              opened={mobileNavOpened}
-              onClick={toggleMobileNav}
-              size="sm"
-            />
+          <Group h="100%" px="md" style={{ position: 'relative' }}>
+            <Box style={{ 
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}>
+              <Logo height="32px" />
+            </Box>
+            <Box style={{ marginLeft: 'auto' }}>
+              <Burger
+                opened={mobileNavOpened}
+                onClick={toggleMobileNav}
+                size="sm"
+              />
+            </Box>
           </Group>
           
           {/* Mobile Navigation Dropdown */}
@@ -65,8 +82,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                 top: '100%',
                 left: 0,
                 right: 0,
-                backgroundColor: 'white',
-                borderTop: '1px solid var(--mantine-color-gray-2)',
+                backgroundColor: 'light-dark(#ffffff, #25262b)',
+                borderTop: '1px solid light-dark(#e9ecef, #373a40)',
                 borderRadius: '0 0 12px 12px',
                 padding: '16px',
                 zIndex: 199,
@@ -80,7 +97,6 @@ export function AppLayout({ children }: AppLayoutProps) {
                 style={{ 
                   letterSpacing: '0.8px', 
                   textTransform: 'uppercase',
-                  fontFamily: 'Euclid Circular A, sans-serif',
                 }}
               >
                 Filter Queries
@@ -105,9 +121,9 @@ export function AppLayout({ children }: AppLayoutProps) {
             width: 280,
             height: '100vh',
             zIndex: 199,
-            backgroundColor: 'var(--mantine-color-gray-0)',
-            borderRight: '1px solid var(--mantine-color-gray-2)',
-            boxShadow: '0 0 20px rgba(0, 0, 0, 0.08)',
+            backgroundColor: 'light-dark(#ffffff, #25262b)',
+            borderRight: '1px solid light-dark(#e9ecef, #373a40)',
+            boxShadow: 'light-dark(0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.3))',
           }}
         >
           <Box style={{ 
@@ -116,16 +132,20 @@ export function AppLayout({ children }: AppLayoutProps) {
             display: 'flex',
             flexDirection: 'column',
           }}>
+            {/* Logo */}
+            <Box style={{ display: 'flex', justifyContent: 'center' }} mb="xl">
+              <Logo height="40px" />
+            </Box>
+            
             <Text 
               size="sm" 
               fw={600} 
               c="gray.6" 
               mb="xl"
-              style={{ 
-                letterSpacing: '0.8px', 
-                textTransform: 'uppercase',
-                fontFamily: 'Euclid Circular A, sans-serif',
-              }}
+                                style={{ 
+                    letterSpacing: '0.8px', 
+                    textTransform: 'uppercase',
+                  }}
             >
               Filter Queries
             </Text>
@@ -139,14 +159,16 @@ export function AppLayout({ children }: AppLayoutProps) {
         </Box>
       )}
 
-      <AppShell.Main style={{ 
-        marginLeft: isMobile ? 0 : 280,
-        marginTop: isMobile ? 60 : 0,
-        padding: isMobile ? '16px' : '40px 48px',
-        backgroundColor: 'var(--mantine-color-gray-0)',
-        minHeight: '100vh',
-        maxWidth: '100%',
-      }}>
+      <AppShell.Main 
+        style={{ 
+          marginLeft: isMobile ? 0 : 280,
+          marginTop: isMobile ? 60 : 0,
+          padding: isMobile ? '16px' : '40px 48px',
+          backgroundColor: 'light-dark(#f8f9fa, #1a1b1e)',
+          minHeight: '100vh',
+          maxWidth: '100%',
+        }}
+      >
         <MainContent filter={activeFilter} />
       </AppShell.Main>
     </AppShell>
