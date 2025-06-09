@@ -15,15 +15,20 @@
     "doc": "docs"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/node": "^18.19.70",
+    "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.48.1",
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "jest": "^29.7.0",
     "nodemon": "^2.0.22",
     "prettier": "^2.8.7",
     "prisma": "^6.2.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.1.5",
     "ts-node": "^10.9.1",
     "typescript": "^5.7.2"
   },
@@ -32,7 +37,11 @@
     "migrate": "docker exec -it vial-backend-api npx prisma migrate deploy",
     "seed": "docker exec -it vial-backend-api npx prisma db seed",
     "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix"
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:docker": "docker-compose exec nodeserver npm test"
   },
   "keywords": [],
   "author": "",
