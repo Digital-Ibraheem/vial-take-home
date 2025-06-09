@@ -57,23 +57,22 @@ export function ResponsesTable({
   // Mobile Card Layout
   const MobileCard = ({ item }: { item: FormData }) => (
     <Card 
-      key={item.id}
-      shadow="sm" 
+      shadow="xs" 
       padding="md"
-      radius="lg"
+      radius="md"
+      mb="sm"
       style={{
         backgroundColor: 'light-dark(#ffffff, #25262b)',
         border: '1px solid light-dark(#e9ecef, #373a40)',
-        marginBottom: '12px',
       }}
     >
       <Stack gap="sm">
         <Text 
           size="sm" 
-          fw={600} 
+          fw={500} 
           lh={1.4}
         >
-          {item.question}
+          {item.answer}
         </Text>
         
         <Text 
@@ -81,7 +80,7 @@ export function ResponsesTable({
           c="dimmed"
           lh={1.4}
         >
-          {item.answer}
+          {item.question}
         </Text>
 
         {/* Query information below the description */}
@@ -97,25 +96,25 @@ export function ResponsesTable({
         </Box>
 
         {/* Expanded queries for mobile */}
-                 {getQueriesCount(item.id) > 0 && (
-           <Collapse in={expandedRow === item.id} transitionDuration={300}>
-             <QueriesTable
-               formData={item}
-               queries={getFilteredQueries(item.id, filter)}
-               editingQuery={editingQuery}
-               editingDescription={editingDescription}
-               editingStatus={editingStatus}
-               onEditQuery={onEditQuery}
-               onSaveQuery={onSaveQuery}
-               onCancelEdit={onCancelEdit}
-               onDeleteQuery={onDeleteQuery}
-               onCreateQuery={onCreateQuery}
-               onEditDescriptionChange={onEditDescriptionChange}
-               onEditStatusChange={onEditStatusChange}
-               isUpdating={isUpdating}
-             />
-           </Collapse>
-         )}
+        {getQueriesCount(item.id) > 0 && (
+          <Collapse in={expandedRow === item.id} transitionDuration={300}>
+            <QueriesTable
+              formData={item}
+              queries={getFilteredQueries(item.id, filter)}
+              editingQuery={editingQuery}
+              editingDescription={editingDescription}
+              editingStatus={editingStatus}
+              onEditQuery={onEditQuery}
+              onSaveQuery={onSaveQuery}
+              onCancelEdit={onCancelEdit}
+              onDeleteQuery={onDeleteQuery}
+              onCreateQuery={onCreateQuery}
+              onEditDescriptionChange={onEditDescriptionChange}
+              onEditStatusChange={onEditStatusChange}
+              isUpdating={isUpdating}
+            />
+          </Collapse>
+        )}
       </Stack>
     </Card>
   );
@@ -130,7 +129,7 @@ export function ResponsesTable({
         }}
       >
         <Table.Td style={{ 
-          maxWidth: '400px',
+          maxWidth: '500px',
           verticalAlign: 'top',
           paddingTop: '20px',
           paddingBottom: '20px',
@@ -140,23 +139,16 @@ export function ResponsesTable({
             size="sm" 
             fw={500} 
             lh={1.5}
-          >
-            {item.question}
-          </Text>
-        </Table.Td>
-        <Table.Td style={{ 
-          maxWidth: '500px',
-          verticalAlign: 'top',
-          paddingTop: '20px',
-          paddingBottom: '20px',
-          height: '80px',
-        }}>
-          <Text 
-            size="sm" 
-            c="dimmed"
-            lh={1.5}
+            mb="xs"
           >
             {item.answer}
+          </Text>
+          <Text 
+            size="xs" 
+            c="dimmed"
+            lh={1.4}
+          >
+            {item.question}
           </Text>
         </Table.Td>
         <Table.Td style={{ 
@@ -239,9 +231,9 @@ export function ResponsesTable({
                 fontSize: '14px',
                 letterSpacing: '0.5px',
                 textTransform: 'uppercase',
-                width: '32%',
+                width: '60%',
               }}>
-                Question Column
+                Response & Question
               </Table.Th>
               <Table.Th style={{ 
                 paddingTop: '18px', 
@@ -251,17 +243,6 @@ export function ResponsesTable({
                 letterSpacing: '0.5px',
                 textTransform: 'uppercase',
                 width: '40%',
-              }}>
-                Answer Column
-              </Table.Th>
-              <Table.Th style={{ 
-                paddingTop: '18px', 
-                paddingBottom: '18px',
-                fontWeight: 600,
-                fontSize: '14px',
-                letterSpacing: '0.5px',
-                textTransform: 'uppercase',
-                width: '28%',
               }}>
                 Queries Column
               </Table.Th>

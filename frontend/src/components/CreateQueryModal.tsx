@@ -68,7 +68,10 @@ export function CreateQueryModal({
               Query Context
             </Text>
           </Group>
-          <Text size={isMobile ? "xs" : "sm"} lh={1.5} mb="sm">
+          <Text size={isMobile ? "sm" : "md"} lh={1.5} mb="sm" fw={500}>
+            {selectedItem?.answer}
+          </Text>
+          <Text size={isMobile ? "xs" : "sm"} c="dimmed" lh={1.4} mb="xs">
             {selectedItem?.question}
           </Text>
           <Text size="10px" c="dimmed" style={{ fontStyle: 'italic' }}>
