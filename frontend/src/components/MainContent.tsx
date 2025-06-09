@@ -7,77 +7,11 @@ import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { FilterType } from './AppLayout';
 
+import { mockQueries, type QueryDetail } from '../data/mockQueries';
+
 interface MainContentProps {
   filter: FilterType;
 }
-
-interface QueryDetail {
-  id: number;
-  description: string;
-  createdAt: Date;
-  updatedAt: Date;
-  status: 'OPEN' | 'RESOLVED';
-}
-
-const mockQueries: Record<number, QueryDetail[]> = {
-  1: [
-    {
-      id: 1,
-      description: "Please provide more specific details about the type of breast cancer and any genetic testing results.",
-      createdAt: new Date('2024-01-15T10:30:00'),
-      updatedAt: new Date('2024-01-16T14:22:00'),
-      status: 'OPEN'
-    },
-    {
-      id: 2,
-      description: "Need clarification on the age of diagnosis and current screening recommendations.",
-      createdAt: new Date('2024-01-14T09:15:00'),
-      updatedAt: new Date('2024-01-15T11:45:00'),
-      status: 'OPEN'
-    }
-  ],
-  2: [
-    {
-      id: 3,
-      description: "Please confirm the exact dosages and timing of medication administration.",
-      createdAt: new Date('2024-01-12T16:20:00'),
-      updatedAt: new Date('2024-01-18T13:30:00'),
-      status: 'RESOLVED'
-    }
-  ],
-  3: [
-    {
-      id: 4,
-      description: "Require more details about the severity and duration of the allergic reaction.",
-      createdAt: new Date('2024-01-10T11:00:00'),
-      updatedAt: new Date('2024-01-11T09:30:00'),
-      status: 'OPEN'
-    }
-  ],
-  5: [
-    {
-      id: 5,
-      description: "Need clarification on specific types of alcoholic beverages and consumption patterns.",
-      createdAt: new Date('2024-01-08T14:15:00'),
-      updatedAt: new Date('2024-01-09T10:20:00'),
-      status: 'OPEN'
-    },
-    {
-      id: 6,
-      description: "Please provide information about any recent changes in drinking habits.",
-      createdAt: new Date('2024-01-07T13:45:00'),
-      updatedAt: new Date('2024-01-08T16:10:00'),
-      status: 'OPEN'
-    },
-    {
-      id: 7,
-      description: "Clarify if there are any associated health concerns or symptoms.",
-      createdAt: new Date('2024-01-06T12:30:00'),
-      updatedAt: new Date('2024-01-07T15:25:00'),
-      status: 'OPEN'
-    }
-  ]
-};
 
 const mockFormData = [
   {
@@ -129,6 +63,9 @@ export function MainContent({ filter }: MainContentProps) {
   const [selectedItem, setSelectedItem] = useState<typeof mockFormData[0] | null>(null);
   const [queryDescription, setQueryDescription] = useState('');
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [editingQuery, setEditingQuery] = useState<number | null>(null);
+  const [editingDescription, setEditingDescription] = useState('');
+  const [editingStatus, setEditingStatus] = useState<'OPEN' | 'RESOLVED'>('OPEN');
 
   const handleCreateQuery = (item: typeof mockFormData[0]) => {
     setSelectedItem(item);
@@ -167,29 +104,57 @@ export function MainContent({ filter }: MainContentProps) {
     }).format(date);
   };
 
+  const handleEditQuery = (query: QueryDetail) => {
+    setEditingQuery(query.id);
+    setEditingDescription(query.description);
+    setEditingStatus(query.status);
+  };
+
+  const handleSaveQuery = (queryId: number) => {
+    console.log('Saving query:', {
+      id: queryId,
+      description: editingDescription,
+      status: editingStatus,
+    });
+    // Here you would typically make an API call to update the query
+    setEditingQuery(null);
+    setEditingDescription('');
+    setEditingStatus('OPEN');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQuery(null);
+    setEditingDescription('');
+    setEditingStatus('OPEN');
+  };
+
   const getQueryDisplay = (item: typeof mockFormData[0]) => {
-    // If no queries exist, show create query button
+    // If no queries exist, show create query button in chevron position
     if (item.queryCount === 0) {
       return (
         <Box style={{ 
           display: 'flex',
           flexDirection: 'row',
-          gap: '8px',
+          gap: '12px',
           height: '40px',
           alignItems: 'flex-start',
+          justifyContent: 'flex-end',
+          width: '100%',
         }}>
-          <Tooltip label="Create Query" position="top">
-            <ActionIcon
-              variant="light"
-              color="blue"
-              size="sm"
-              radius="md"
-              onClick={() => handleCreateQuery(item)}
-              style={{ cursor: 'pointer' }}
-            >
-              <IconPlus size={14} />
-            </ActionIcon>
-          </Tooltip>
+          <Button
+            variant="light"
+            color="blue"
+            size="sm"
+            leftSection={<IconPlus size={16} />}
+            onClick={() => handleCreateQuery(item)}
+            style={{ 
+              fontSize: '14px',
+              fontFamily: 'Euclid Circular A, sans-serif',
+              fontWeight: 600,
+            }}
+          >
+            Add Query
+          </Button>
         </Box>
       );
     }
@@ -224,7 +189,15 @@ export function MainContent({ filter }: MainContentProps) {
           >
             {item.queryStatus}
           </Badge>
-          <Text size="xs" c="gray.5" fw={500}>
+          <Text 
+            size="xs" 
+            c="rgb(67, 75, 86)" 
+            fw={600}
+            style={{ 
+              fontFamily: 'Euclid Circular A, sans-serif',
+              opacity: 0.6,
+            }}
+          >
             {item.queryCount} {item.queryCount === 1 ? 'query' : 'queries'}
           </Text>
         </Box>
@@ -267,7 +240,13 @@ export function MainContent({ filter }: MainContentProps) {
           paddingBottom: '20px',
           height: '80px',
         }}>
-          <Text size="sm" fw={500} c="gray.8" lh={1.5}>
+          <Text 
+            size="sm" 
+            fw={500} 
+            c="rgb(67, 75, 86)" 
+            lh={1.5}
+            style={{ fontFamily: 'Euclid Circular A, sans-serif' }}
+          >
             {item.question}
           </Text>
         </Table.Td>
@@ -278,7 +257,15 @@ export function MainContent({ filter }: MainContentProps) {
           paddingBottom: '20px',
           height: '80px',
         }}>
-          <Text size="sm" c="gray.7" lh={1.5}>
+          <Text 
+            size="sm" 
+            c="rgb(67, 75, 86)" 
+            lh={1.5}
+            style={{ 
+              fontFamily: 'Euclid Circular A, sans-serif',
+              opacity: 0.8,
+            }}
+          >
             {item.answer}
           </Text>
         </Table.Td>
@@ -305,25 +292,44 @@ export function MainContent({ filter }: MainContentProps) {
                   borderBottom: '1px solid var(--mantine-color-gray-2)',
                 }}
               >
-                <Text size="sm" fw={600} c="gray.7" mb="md">
-                  Query Details
-                </Text>
+                                    <Text 
+                      size="sm" 
+                      fw={600} 
+                      c="rgb(67, 75, 86)" 
+                      mb="md"
+                      style={{ 
+                        fontFamily: 'Euclid Circular A, sans-serif',
+                      }}
+                    >
+                      Query Details
+                    </Text>
                 <Table style={{ backgroundColor: 'white', fontSize: '14px' }}>
                   <Table.Thead>
                     <Table.Tr>
-                      <Table.Th style={{ width: '45%' }}>Description</Table.Th>
-                      <Table.Th style={{ width: '20%' }}>Created</Table.Th>
-                      <Table.Th style={{ width: '20%' }}>Last Updated</Table.Th>
-                      <Table.Th style={{ width: '15%' }}>Status</Table.Th>
+                      <Table.Th style={{ width: '40%' }}>Description</Table.Th>
+                      <Table.Th style={{ width: '18%' }}>Created</Table.Th>
+                      <Table.Th style={{ width: '18%' }}>Last Updated</Table.Th>
+                      <Table.Th style={{ width: '14%' }}>Status</Table.Th>
+                      <Table.Th style={{ width: '10%' }}></Table.Th>
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
                     {mockQueries[item.id].map((query) => (
                       <Table.Tr key={query.id}>
                         <Table.Td>
-                          <Text size="sm" lh={1.4}>
-                            {query.description}
-                          </Text>
+                          {editingQuery === query.id ? (
+                            <TextInput
+                              value={editingDescription}
+                              onChange={(event) => setEditingDescription(event.currentTarget.value)}
+                              size="sm"
+                              placeholder="Enter query description"
+                              style={{ fontSize: '14px' }}
+                            />
+                          ) : (
+                            <Text size="sm" lh={1.4}>
+                              {query.description}
+                            </Text>
+                          )}
                         </Table.Td>
                         <Table.Td>
                           <Text size="xs" c="gray.6">
@@ -336,18 +342,97 @@ export function MainContent({ filter }: MainContentProps) {
                           </Text>
                         </Table.Td>
                         <Table.Td>
-                          <Badge 
-                            color={query.status === 'OPEN' ? 'red' : 'green'} 
-                            variant="light" 
-                            size="xs"
-                          >
-                            {query.status}
-                          </Badge>
+                          {editingQuery === query.id ? (
+                            <Group gap="xs" align="center">
+                              <Checkbox
+                                checked={editingStatus === 'RESOLVED'}
+                                onChange={(event) => 
+                                  setEditingStatus(event.currentTarget.checked ? 'RESOLVED' : 'OPEN')
+                                }
+                                size="sm"
+                                color="green"
+                                label=""
+                              />
+                              <Text size="xs" c="gray.6">
+                                {editingStatus === 'RESOLVED' ? 'Resolved' : 'Open'}
+                              </Text>
+                            </Group>
+                          ) : (
+                            <Badge 
+                              color={query.status === 'OPEN' ? 'red' : 'green'} 
+                              variant="light" 
+                              size="xs"
+                            >
+                              {query.status}
+                            </Badge>
+                          )}
+                        </Table.Td>
+                        <Table.Td>
+                          {editingQuery === query.id ? (
+                            <Group gap="xs">
+                              <Tooltip label="Save changes">
+                                <ActionIcon
+                                  color="green"
+                                  variant="light"
+                                  size="sm"
+                                  onClick={() => handleSaveQuery(query.id)}
+                                >
+                                  <IconDeviceFloppy size={14} />
+                                </ActionIcon>
+                              </Tooltip>
+                              <Tooltip label="Cancel">
+                                <ActionIcon
+                                  color="gray"
+                                  variant="light"
+                                  size="sm"
+                                  onClick={handleCancelEdit}
+                                >
+                                  <IconX size={14} />
+                                </ActionIcon>
+                              </Tooltip>
+                            </Group>
+                          ) : (
+                            <Tooltip label="Edit query">
+                              <ActionIcon
+                                color="blue"
+                                variant="light"
+                                size="sm"
+                                onClick={() => handleEditQuery(query)}
+                              >
+                                <IconPencil size={14} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
                         </Table.Td>
                       </Table.Tr>
                     ))}
                   </Table.Tbody>
                 </Table>
+                
+                {/* Create Query Button at bottom of expanded queries */}
+                <Box style={{ 
+                  padding: '16px 0 8px 0',
+                  borderTop: '1px solid var(--mantine-color-gray-2)',
+                  marginTop: '16px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}>
+                  <Button
+                    variant="light"
+                    color="blue"
+                    size="sm"
+                    leftSection={<IconPlus size={16} />}
+                    onClick={() => handleCreateQuery(item)}
+                    style={{ 
+                      fontSize: '14px',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontWeight: 600,
+                      fontStyle: 'normal',
+                    }}
+                  >
+                    Add New Query
+                  </Button>
+                </Box>
               </Box>
             </Collapse>
           </Table.Td>
@@ -374,19 +459,52 @@ export function MainContent({ filter }: MainContentProps) {
         <Box>
           <Group justify="space-between" align="flex-end" mb="md">
             <Box>
-              <Text size="2.25rem" fw={700} c="gray.9" mb="xs" lh={1.2}>
+              <Text 
+                size="2.25rem" 
+                fw={700} 
+                c="rgb(67, 75, 86)" 
+                mb="xs" 
+                lh={1.2}
+                style={{ fontFamily: 'Euclid Circular A, sans-serif' }}
+              >
                 {getFilterTitle()}
               </Text>
-              <Text size="lg" c="gray.6" lh={1.5} maw={600}>
+              <Text 
+                size="lg" 
+                c="rgb(67, 75, 86)" 
+                lh={1.5} 
+                maw={600}
+                style={{ 
+                  fontFamily: 'Euclid Circular A, sans-serif',
+                  opacity: 0.7,
+                }}
+              >
                 {getFilterDescription()}
               </Text>
             </Box>
             <Box ta="right">
-              <Text size="sm" c="gray.5" fw={500}>
+              <Text 
+                size="sm" 
+                c="rgb(67, 75, 86)" 
+                fw={600}
+                style={{ 
+                  fontFamily: 'Poppins, sans-serif',
+                  fontStyle: 'normal',
+                }}
+              >
                 {filteredData.length} of {mockFormData.length} entries
               </Text>
               {filter !== 'All' && (
-                <Text size="xs" c="gray.4" mt={2}>
+                <Text 
+                  size="xs" 
+                  c="rgb(67, 75, 86)" 
+                  mt={2}
+                  style={{ 
+                    fontFamily: 'Poppins, sans-serif',
+                    fontStyle: 'normal',
+                    opacity: 0.6,
+                  }}
+                >
                   Filtered by {filter.toLowerCase()} status
                 </Text>
               )}
@@ -425,7 +543,7 @@ export function MainContent({ filter }: MainContentProps) {
                 }}
               >
                 <Table.Thead style={{
-                  backgroundColor: 'var(--mantine-color-gray-0)',
+                  backgroundColor: '#ffffff',
                   borderBottom: '2px solid var(--mantine-color-gray-2)',
                 }}>
                   <Table.Tr style={{ height: '60px' }}>
@@ -434,9 +552,11 @@ export function MainContent({ filter }: MainContentProps) {
                       paddingBottom: '18px',
                       fontWeight: 600,
                       fontSize: '14px',
-                      color: 'var(--mantine-color-gray-7)',
+                      color: 'rgb(67, 75, 86)',
                       letterSpacing: '0.5px',
                       textTransform: 'uppercase',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontStyle: 'normal',
                       width: '35%',
                     }}>
                       Question Column
@@ -446,9 +566,11 @@ export function MainContent({ filter }: MainContentProps) {
                       paddingBottom: '18px',
                       fontWeight: 600,
                       fontSize: '14px',
-                      color: 'var(--mantine-color-gray-7)',
+                      color: 'rgb(67, 75, 86)',
                       letterSpacing: '0.5px',
                       textTransform: 'uppercase',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontStyle: 'normal',
                       width: '45%',
                     }}>
                       Answer Column
@@ -458,9 +580,11 @@ export function MainContent({ filter }: MainContentProps) {
                       paddingBottom: '18px',
                       fontWeight: 600,
                       fontSize: '14px',
-                      color: 'var(--mantine-color-gray-7)',
+                      color: 'rgb(67, 75, 86)',
                       letterSpacing: '0.5px',
                       textTransform: 'uppercase',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontStyle: 'normal',
                       width: '20%',
                     }}>
                       Queries Column
@@ -478,39 +602,86 @@ export function MainContent({ filter }: MainContentProps) {
       <Modal 
         opened={opened} 
         onClose={close} 
-        title="Create Query"
-        size="md"
+        title={
+          <Text size="lg" fw={600}>Create New Query</Text>
+        }
+        size="lg"
         centered
+        radius="lg"
+        padding="xl"
+        styles={{
+          header: {
+            backgroundColor: 'var(--mantine-color-gray-0)',
+            borderBottom: '1px solid var(--mantine-color-gray-2)',
+            borderRadius: '12px 12px 0 0',
+            padding: '20px 24px',
+          },
+          body: {
+            padding: '24px',
+          },
+        }}
       >
-        <Stack gap="lg">
-          <Box>
-            <Text size="sm" c="gray.6" mb="xs">
-              Creating query for:
-            </Text>
-            <Text size="sm" fw={500} c="gray.8">
+        <Stack gap="xl">
+          <Box
+            style={{
+              backgroundColor: 'var(--mantine-color-blue-0)',
+              border: '1px solid var(--mantine-color-blue-2)',
+              borderRadius: '8px',
+              padding: '16px',
+            }}
+          >
+            <Group gap="sm" mb="sm">
+              <Text size="sm" fw={600} c="blue.7">
+                Query Context
+              </Text>
+            </Group>
+            <Text size="sm" c="gray.7" lh={1.5} mb="sm">
               {selectedItem?.question}
             </Text>
-            <Text size="xs" c="gray.5" mt="xs">
-              Title will be: Query | {selectedItem?.question}
+            <Text size="xs" c="gray.5" style={{ fontStyle: 'italic' }}>
+              Title: Query | {selectedItem?.question}
             </Text>
           </Box>
 
-          <Textarea
-            label="Query Description"
-            placeholder="Describe what clarification or additional information is needed"
-            value={queryDescription}
-            onChange={(event) => setQueryDescription(event.currentTarget.value)}
-            minRows={4}
-            required
-          />
+          <Box>
+            <Text size="sm" fw={500} mb="xs" c="gray.8">
+              Query Description <Text span c="red">*</Text>
+            </Text>
+            <Textarea
+              placeholder="Describe what clarification or additional information is needed..."
+              value={queryDescription}
+              onChange={(event) => setQueryDescription(event.currentTarget.value)}
+              minRows={5}
+              autosize
+              maxRows={8}
+              styles={{
+                input: {
+                  fontSize: '14px',
+                  lineHeight: 1.5,
+                  padding: '12px',
+                },
+              }}
+            />
+            <Text size="xs" c="gray.5" mt="xs">
+              Provide clear details about what additional information is needed.
+            </Text>
+          </Box>
 
-          <Group justify="flex-end" gap="sm">
-            <Button variant="subtle" onClick={close}>
+          <Group justify="space-between" pt="md">
+            <Button 
+              variant="subtle" 
+              color="gray"
+              onClick={close}
+              size="md"
+            >
               Cancel
             </Button>
             <Button 
               onClick={handleSubmitQuery}
               disabled={!queryDescription.trim()}
+              size="md"
+              leftSection={<IconPlus size={16} />}
+              style={{ minWidth: '140px' }}
             >
               Create Query
             </Button>
