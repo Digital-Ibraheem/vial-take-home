@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Box, Text, Stack, Card, Table, Badge, Container, Group, ActionIcon, Tooltip, Modal, Textarea, Button, Collapse } from '@mantine/core';
-import { IconPlus, IconQuestionMark, IconCheck, IconChevronDown, IconChevronRight } from '@tabler/icons-react';
+import { Box, Text, Stack, Card, Table, Badge, Container, Group, ActionIcon, Tooltip, Modal, Textarea, Button, Collapse, Transition, TextInput, Checkbox } from '@mantine/core';
+import { IconPlus, IconQuestionMark, IconCheck, IconChevronDown, IconChevronRight, IconPencil, IconDeviceFloppy, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { FilterType } from './AppLayout';
@@ -128,7 +128,7 @@ export function MainContent({ filter }: MainContentProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const [selectedItem, setSelectedItem] = useState<typeof mockFormData[0] | null>(null);
   const [queryDescription, setQueryDescription] = useState('');
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   const handleCreateQuery = (item: typeof mockFormData[0]) => {
     setSelectedItem(item);
@@ -149,13 +149,11 @@ export function MainContent({ filter }: MainContentProps) {
   };
 
   const toggleRowExpansion = (itemId: number) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId);
+    if (expandedRow === itemId) {
+      setExpandedRow(null); // Close if clicking the same row
     } else {
-      newExpanded.add(itemId);
+      setExpandedRow(itemId); // Open the clicked row (closes any other open row)
     }
-    setExpandedRows(newExpanded);
   };
 
   const formatDate = (date: Date) => {
@@ -200,7 +198,7 @@ export function MainContent({ filter }: MainContentProps) {
     const isOpen = item.queryStatus === 'OPEN';
     const statusColor = isOpen ? 'red' : 'green';
     const StatusIcon = isOpen ? IconQuestionMark : IconCheck;
-    const isExpanded = expandedRows.has(item.id);
+    const isExpanded = expandedRow === item.id;
 
     return (
       <Box style={{ 
@@ -258,7 +256,7 @@ export function MainContent({ filter }: MainContentProps) {
     <React.Fragment key={item.id}>
       <Table.Tr 
         style={{ 
-          borderBottom: expandedRows.has(item.id) ? 'none' : '1px solid var(--mantine-color-gray-2)',
+          borderBottom: expandedRow === item.id ? 'none' : '1px solid var(--mantine-color-gray-2)',
           height: '80px',
         }}
       >
@@ -294,59 +292,64 @@ export function MainContent({ filter }: MainContentProps) {
           {getQueryDisplay(item)}
         </Table.Td>
       </Table.Tr>
-      
-      {/* Expanded queries sub-table */}
-      {expandedRows.has(item.id) && mockQueries[item.id] && (
+            
+      {/* Expanded queries sub-table with animations */}
+      {mockQueries[item.id] && (
         <Table.Tr>
-          <Table.Td colSpan={3} style={{ padding: 0, borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
-            <Box style={{ 
-              backgroundColor: 'var(--mantine-color-gray-0)', 
-              padding: '16px 24px',
-            }}>
-              <Text size="sm" fw={600} c="gray.7" mb="md">
-                Query Details
-              </Text>
-                             <Table style={{ backgroundColor: 'white', fontSize: '14px' }}>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th style={{ width: '45%' }}>Description</Table.Th>
-                    <Table.Th style={{ width: '20%' }}>Created</Table.Th>
-                    <Table.Th style={{ width: '20%' }}>Last Updated</Table.Th>
-                    <Table.Th style={{ width: '15%' }}>Status</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {mockQueries[item.id].map((query) => (
-                    <Table.Tr key={query.id}>
-                      <Table.Td>
-                        <Text size="sm" lh={1.4}>
-                          {query.description}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="xs" c="gray.6">
-                          {formatDate(query.createdAt)}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="xs" c="gray.6">
-                          {formatDate(query.updatedAt)}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge 
-                          color={query.status === 'OPEN' ? 'red' : 'green'} 
-                          variant="light" 
-                          size="xs"
-                        >
-                          {query.status}
-                        </Badge>
-                      </Table.Td>
+          <Table.Td colSpan={3} style={{ padding: 0, border: 'none' }}>
+            <Collapse in={expandedRow === item.id} transitionDuration={300}>
+              <Box 
+                style={{
+                  backgroundColor: 'var(--mantine-color-gray-0)', 
+                  padding: '16px 24px',
+                  borderBottom: '1px solid var(--mantine-color-gray-2)',
+                }}
+              >
+                <Text size="sm" fw={600} c="gray.7" mb="md">
+                  Query Details
+                </Text>
+                <Table style={{ backgroundColor: 'white', fontSize: '14px' }}>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th style={{ width: '45%' }}>Description</Table.Th>
+                      <Table.Th style={{ width: '20%' }}>Created</Table.Th>
+                      <Table.Th style={{ width: '20%' }}>Last Updated</Table.Th>
+                      <Table.Th style={{ width: '15%' }}>Status</Table.Th>
                     </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </Box>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {mockQueries[item.id].map((query) => (
+                      <Table.Tr key={query.id}>
+                        <Table.Td>
+                          <Text size="sm" lh={1.4}>
+                            {query.description}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="xs" c="gray.6">
+                            {formatDate(query.createdAt)}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="xs" c="gray.6">
+                            {formatDate(query.updatedAt)}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge 
+                            color={query.status === 'OPEN' ? 'red' : 'green'} 
+                            variant="light" 
+                            size="xs"
+                          >
+                            {query.status}
+                          </Badge>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </Box>
+            </Collapse>
           </Table.Td>
         </Table.Tr>
       )}
