@@ -187,20 +187,14 @@ export const api = {
   }> {
     const result = await formDataApi.getAll();
     
-    // Debug: Log the actual response structure
-    console.log('Backend response:', result);
-    
     // Handle case where backend might return different structure
     let formDataArray: IFormData[] = [];
     
     if (Array.isArray(result)) {
-      // If result is directly an array
       formDataArray = result;
     } else if (result && result.formData && Array.isArray(result.formData)) {
-      // If result has a formData property
       formDataArray = result.formData;
     } else if (result && Array.isArray(result)) {
-      // If result is an array-like object
       formDataArray = Array.from(result);
     } else {
       console.warn('Unexpected backend response structure:', result);

@@ -10,8 +10,10 @@ import { IFormData as ApiFormData, IQuery as ApiQuery } from '../services/api';
  * Convert API FormData to Mock FormData format
  */
 export function apiFormDataToMock(apiData: ApiFormData): MockFormData {
+  const parsedId = parseInt(apiData.id, 10);
+  
   return {
-    id: parseInt(apiData.id, 10), // Convert UUID string to number
+    id: isNaN(parsedId) ? stringIdToNumber(apiData.id) : parsedId,
     question: apiData.question,
     answer: apiData.answer,
   };
@@ -21,14 +23,17 @@ export function apiFormDataToMock(apiData: ApiFormData): MockFormData {
  * Convert API Query to Mock Query format
  */
 export function apiQueryToMock(apiQuery: ApiQuery): MockQuery {
+  const parsedId = parseInt(apiQuery.id, 10);
+  const parsedFormDataId = parseInt(apiQuery.formDataId, 10);
+  
   return {
-    id: parseInt(apiQuery.id, 10), // Convert UUID string to number
+    id: isNaN(parsedId) ? stringIdToNumber(apiQuery.id) : parsedId,
     title: apiQuery.title,
     description: apiQuery.description || '',
     createdAt: apiQuery.createdAt,
     updatedAt: apiQuery.updatedAt,
     status: apiQuery.status,
-    formDataId: parseInt(apiQuery.formDataId, 10), // Convert UUID string to number
+    formDataId: isNaN(parsedFormDataId) ? stringIdToNumber(apiQuery.formDataId) : parsedFormDataId,
   };
 }
 

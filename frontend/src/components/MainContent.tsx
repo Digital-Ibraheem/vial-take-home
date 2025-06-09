@@ -93,14 +93,17 @@ export function MainContent({ filter }: MainContentProps) {
   const handleSubmitQuery = async () => {
     if (selectedItem && queryDescription.trim()) {
       try {
-        // Convert mock FormData to API format for the create call
-        const apiFormData = {
-          id: selectedItem.id.toString(),
-          question: selectedItem.question,
-          answer: selectedItem.answer,
-        };
+        // Find the original API FormData with the correct UUID
+        const originalApiFormData = apiFormData.find(apiItem => 
+          apiItem.question === selectedItem.question && 
+          apiItem.answer === selectedItem.answer
+        );
         
-        await createQuery.execute(apiFormData, queryDescription.trim());
+        if (!originalApiFormData) {
+          throw new Error('Could not find corresponding API FormData for selected item');
+        }
+        
+        await createQuery.execute(originalApiFormData, queryDescription.trim());
         closeCreateModal();
         setQueryDescription('');
         setSelectedItem(null);
@@ -126,7 +129,23 @@ export function MainContent({ filter }: MainContentProps) {
 
   const handleSaveQuery = async (queryId: number) => {
     try {
-      await updateQuery.execute(queryId.toString(), editingDescription, editingStatus);
+      // Find the original API Query with the correct UUID
+      const mockQuery = queries.find(q => q.id === queryId);
+      if (!mockQuery) {
+        throw new Error('Could not find mock query');
+      }
+      
+      const originalApiQuery = apiQueries.find(apiQuery => 
+        apiQuery.title === mockQuery.title && 
+        apiQuery.description === mockQuery.description &&
+        apiQuery.status === mockQuery.status
+      );
+      
+      if (!originalApiQuery) {
+        throw new Error('Could not find corresponding API Query for selected query');
+      }
+      
+      await updateQuery.execute(originalApiQuery.id, editingDescription, editingStatus);
       setEditingQuery(null);
       setEditingDescription('');
       setEditingStatus('OPEN');
@@ -149,7 +168,18 @@ export function MainContent({ filter }: MainContentProps) {
   const handleConfirmDelete = async () => {
     if (queryToDelete) {
       try {
-        await deleteQuery.execute(queryToDelete.id.toString());
+        // Find the original API Query with the correct UUID
+        const originalApiQuery = apiQueries.find(apiQuery => 
+          apiQuery.title === queryToDelete.title && 
+          apiQuery.description === queryToDelete.description &&
+          apiQuery.status === queryToDelete.status
+        );
+        
+        if (!originalApiQuery) {
+          throw new Error('Could not find corresponding API Query for selected query');
+        }
+        
+        await deleteQuery.execute(originalApiQuery.id);
         closeDeleteModal();
         setQueryToDelete(null);
       } catch (err) {
