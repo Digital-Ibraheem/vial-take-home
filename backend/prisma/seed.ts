@@ -20,19 +20,26 @@ const createAllRecords = async () => {
   console.log('All records created')
 }
 
-async function seed() {
+export async function runSeed() {
   await deleteAllRecords()
   await createAllRecords()
 }
 
-seed()
-  .then(async () => {
-    await client.$disconnect()
-    console.log('database disconnected')
-    process.exit(0)
-  })
-  .catch(async e => {
-    console.error(e)
-    await client.$disconnect()
-    process.exit(1)
-  })
+async function seed() {
+  await runSeed()
+}
+
+// Only run automatically if this file is executed directly (not imported)
+if (require.main === module) {
+  seed()
+    .then(async () => {
+      await client.$disconnect()
+      console.log('database disconnected')
+      process.exit(0)
+    })
+    .catch(async e => {
+      console.error(e)
+      await client.$disconnect()
+      process.exit(1)
+    })
+}

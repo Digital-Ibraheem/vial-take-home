@@ -105,8 +105,8 @@ export function MainContent({ filter }: MainContentProps) {
         
         await createQuery.execute(originalApiFormData, queryDescription.trim());
         closeCreateModal();
-        setQueryDescription('');
-        setSelectedItem(null);
+    setQueryDescription('');
+    setSelectedItem(null);
       } catch (err) {
         console.error('Failed to create query:', err);
       }
@@ -146,9 +146,9 @@ export function MainContent({ filter }: MainContentProps) {
       }
       
       await updateQuery.execute(originalApiQuery.id, editingDescription, editingStatus);
-      setEditingQuery(null);
-      setEditingDescription('');
-      setEditingStatus('OPEN');
+    setEditingQuery(null);
+    setEditingDescription('');
+    setEditingStatus('OPEN');
     } catch (err) {
       console.error('Failed to save query:', err);
     }
@@ -294,13 +294,13 @@ export function MainContent({ filter }: MainContentProps) {
               >
                 {filteredFormData.length} of {formData.length} responses
               </Text>
-              <Text 
-                size="10px"
+                <Text 
+                  size="10px"
                 c="dimmed"
-                mt={2}
-              >
+                  mt={2}
+                >
                 {filteredQueries.length} of {totalQueries} queries
-              </Text>
+                </Text>
             </Box>
           </Group>
         </Box>

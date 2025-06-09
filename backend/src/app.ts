@@ -2,6 +2,7 @@ import fastify from 'fastify'
 
 import formDataRoutes from './routes/form_data'
 import queryRoutes from './routes/query'
+import seedRoutes from './routes/seed'
 import errorHandler from './errors'
 
 function build(opts = {}) {
@@ -21,7 +22,8 @@ function build(opts = {}) {
       produces: ['application/json'],
       tags: [
         { name: 'Form Data', description: 'Form data related endpoints' },
-        { name: 'Queries', description: 'Query management endpoints' }
+        { name: 'Queries', description: 'Query management endpoints' },
+        { name: 'Utilities', description: 'Utility endpoints like seeding' }
       ],
     },
     mode: 'dynamic',
@@ -47,6 +49,7 @@ function build(opts = {}) {
 
   app.register(formDataRoutes, { prefix: '/form-data' })
   app.register(queryRoutes, { prefix: '/query' })
+  app.register(seedRoutes, { prefix: '/api' })
 
   app.setErrorHandler(errorHandler)
 

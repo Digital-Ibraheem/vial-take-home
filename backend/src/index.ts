@@ -13,8 +13,10 @@ server.register(CORSConfig, {
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
 })
 
+const port = parseInt(process.env.PORT || '8080', 10)
+
 server
-  .listen({ port: 8080, host: '0.0.0.0' })
+  .listen({ port, host: '0.0.0.0' })
   .then(address => {
     console.log(`Server listening at ${address}`)
   })
