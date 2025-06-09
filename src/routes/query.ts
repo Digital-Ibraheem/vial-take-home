@@ -79,6 +79,37 @@ async function queryRoutes(app: FastifyInstance) {
     Body: IUpdateQuery
     Reply: IQuery
   }>('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string', format: 'uuid' }
+        }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          status: { type: 'string', enum: ['OPEN', 'RESOLVED'] }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            status: { type: 'string' },
+            createdAt: { type: 'string' },
+            updatedAt: { type: 'string' },
+            formDataId: { type: 'string' }
+          }
+        }
+      }
+    },
     async handler(req, reply) {
       log.debug({ queryId: req.params.id }, 'update query')
       try {
@@ -124,6 +155,23 @@ async function queryRoutes(app: FastifyInstance) {
     Params: { id: string }
     Reply: { message: string }
   }>('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string', format: 'uuid' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' }
+          }
+        }
+      }
+    },
     async handler(req, reply) {
       log.debug({ queryId: req.params.id }, 'delete query')
       try {

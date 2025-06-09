@@ -47,10 +47,17 @@ export interface IDeleteResponse {
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-// Common headers for all requests
-const getHeaders = (): HeadersInit => ({
-  'Content-Type': 'application/json',
-});
+// Helper function to get headers based on whether there's a body
+const getHeaders = (hasBody: boolean = false): HeadersInit => {
+  const headers: HeadersInit = {};
+  
+  // Only set Content-Type if we're sending a body
+  if (hasBody) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  return headers;
+};
 
 // Generic API request handler with error handling
 async function apiRequest<T>(
@@ -59,8 +66,12 @@ async function apiRequest<T>(
 ): Promise<T> {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
+    
+    // Check if we're sending a body
+    const hasBody = !!options.body;
+    
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: getHeaders(hasBody),
       ...options,
     });
 

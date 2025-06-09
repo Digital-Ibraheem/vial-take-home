@@ -13,6 +13,39 @@ async function formDataRoutes(app: FastifyInstance) {
   app.get<{
     Reply: ICountedFormData
   }>('', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            total: { type: 'number' },
+            formData: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  question: { type: 'string' },
+                  answer: { type: 'string' },
+                  queries: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        title: { type: 'string' },
+                        description: { type: 'string' },
+                        status: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     async handler(req, reply) {
       log.debug('get form data')
       try {

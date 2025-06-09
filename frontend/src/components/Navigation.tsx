@@ -1,7 +1,7 @@
 'use client';
 
-import { NavLink, Stack, Box, Divider } from '@mantine/core';
-import { IconFilter, IconCircle, IconCheck } from '@tabler/icons-react';
+import { NavLink, Stack, Box, Divider, ActionIcon, Tooltip, Group } from '@mantine/core';
+import { IconFilter, IconCircle, IconCheck, IconBrandGithub } from '@tabler/icons-react';
 import { FilterType } from './AppLayout';
 import { DarkModeToggle } from './DarkModeToggle';
 
@@ -77,9 +77,26 @@ export function Navigation({ collapsed, activeFilter, onFilterChange }: Navigati
       
       <Box>
         <Divider mb="md" />
-        <Box style={{ display: 'flex', justifyContent: 'center' }}>
+        <Group justify="center" gap="md">
+          <Tooltip label="View source code on GitHub" position="top">
+            <ActionIcon
+              component="a"
+              href="https://github.com/digital-ibraheem/vial-take-home"
+              target="_blank"
+              rel="noopener noreferrer"
+              size="lg"
+              variant="light"
+              color="gray"
+              style={{
+                transition: 'all 0.2s ease',
+              }}
+              aria-label="View source code on GitHub"
+            >
+              <IconBrandGithub size={18} />
+            </ActionIcon>
+          </Tooltip>
           <DarkModeToggle size="lg" variant="light" />
-        </Box>
+        </Group>
       </Box>
     </Stack>
   );
