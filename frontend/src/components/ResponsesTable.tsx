@@ -69,10 +69,10 @@ export function ResponsesTable({
       <Stack gap="sm">
         <Text 
           size="sm" 
-          fw={500} 
+          fw={600} 
           lh={1.4}
         >
-          {item.answer}
+          {item.question}
         </Text>
         
         <Text 
@@ -80,7 +80,7 @@ export function ResponsesTable({
           c="dimmed"
           lh={1.4}
         >
-          {item.question}
+          {item.answer}
         </Text>
 
         {/* Query information below the description */}
@@ -129,7 +129,7 @@ export function ResponsesTable({
         }}
       >
         <Table.Td style={{ 
-          maxWidth: '500px',
+          maxWidth: '400px',
           verticalAlign: 'top',
           paddingTop: '20px',
           paddingBottom: '20px',
@@ -139,16 +139,23 @@ export function ResponsesTable({
             size="sm" 
             fw={500} 
             lh={1.5}
-            mb="xs"
-          >
-            {item.answer}
-          </Text>
-          <Text 
-            size="xs" 
-            c="dimmed"
-            lh={1.4}
           >
             {item.question}
+          </Text>
+        </Table.Td>
+        <Table.Td style={{ 
+          maxWidth: '500px',
+          verticalAlign: 'top',
+          paddingTop: '20px',
+          paddingBottom: '20px',
+          height: '80px',
+        }}>
+          <Text 
+            size="sm" 
+            c="dimmed"
+            lh={1.5}
+          >
+            {item.answer}
           </Text>
         </Table.Td>
         <Table.Td style={{ 
@@ -231,9 +238,9 @@ export function ResponsesTable({
                 fontSize: '14px',
                 letterSpacing: '0.5px',
                 textTransform: 'uppercase',
-                width: '60%',
+                width: '32%',
               }}>
-                Response & Question
+                Question Column
               </Table.Th>
               <Table.Th style={{ 
                 paddingTop: '18px', 
@@ -243,6 +250,17 @@ export function ResponsesTable({
                 letterSpacing: '0.5px',
                 textTransform: 'uppercase',
                 width: '40%',
+              }}>
+                Answer Column
+              </Table.Th>
+              <Table.Th style={{ 
+                paddingTop: '18px', 
+                paddingBottom: '18px',
+                fontWeight: 600,
+                fontSize: '14px',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                width: '28%',
               }}>
                 Queries Column
               </Table.Th>
