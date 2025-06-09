@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { MantineProvider } from '@mantine/core';
+import { ColorSchemeScript } from '@mantine/core';
+import { ThemeProvider } from '../components/ThemeProvider';
 import '@mantine/core/styles.css';
 import './globals.css';
 
@@ -15,10 +16,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <ColorSchemeScript defaultColorScheme="light" />
+      </head>
       <body>
-        <MantineProvider>
+        <ThemeProvider>
           {children}
-        </MantineProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

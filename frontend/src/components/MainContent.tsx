@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Box, Text, Stack, Card, Table, Badge, Container, Group, ActionIcon, Tooltip, Modal, Textarea, Button, Collapse, Transition, TextInput, Checkbox } from '@mantine/core';
+import { Box, Text, Stack, Card, Table, Badge, Container, Group, ActionIcon, Tooltip, Modal, Textarea, Button, Collapse, Transition, TextInput, Checkbox, SimpleGrid } from '@mantine/core';
 import { IconPlus, IconQuestionMark, IconCheck, IconChevronDown, IconChevronRight, IconPencil, IconDeviceFloppy, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { FilterType } from './AppLayout';
 
 import { mockQueries, type QueryDetail } from '../data/mockQueries';
@@ -66,6 +66,7 @@ export function MainContent({ filter }: MainContentProps) {
   const [editingQuery, setEditingQuery] = useState<number | null>(null);
   const [editingDescription, setEditingDescription] = useState('');
   const [editingStatus, setEditingStatus] = useState<'OPEN' | 'RESOLVED'>('OPEN');
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleCreateQuery = (item: typeof mockFormData[0]) => {
     setSelectedItem(item);
@@ -135,7 +136,7 @@ export function MainContent({ filter }: MainContentProps) {
         <Box style={{ 
           display: 'flex',
           flexDirection: 'row',
-          gap: '12px',
+          gap: isMobile ? '8px' : '12px',
           height: '40px',
           alignItems: 'flex-start',
           justifyContent: 'flex-end',
@@ -144,16 +145,16 @@ export function MainContent({ filter }: MainContentProps) {
           <Button
             variant="light"
             color="blue"
-            size="sm"
-            leftSection={<IconPlus size={16} />}
+            size={isMobile ? 'xs' : 'sm'}
+            leftSection={<IconPlus size={isMobile ? 14 : 16} />}
             onClick={() => handleCreateQuery(item)}
             style={{ 
-              fontSize: '14px',
+              fontSize: isMobile ? '12px' : '14px',
               fontFamily: 'Euclid Circular A, sans-serif',
               fontWeight: 600,
             }}
           >
-            Add Query
+            {isMobile ? 'Add' : 'Add Query'}
           </Button>
         </Box>
       );
@@ -169,7 +170,7 @@ export function MainContent({ filter }: MainContentProps) {
       <Box style={{ 
         display: 'flex',
         flexDirection: 'row',
-        gap: '12px',
+        gap: isMobile ? '8px' : '12px',
         height: '40px',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
@@ -183,14 +184,14 @@ export function MainContent({ filter }: MainContentProps) {
           <Badge 
             color={statusColor} 
             variant="light" 
-            size="sm" 
+            size={isMobile ? 'xs' : 'sm'} 
             radius="md"
-            leftSection={<StatusIcon size={12} />}
+            leftSection={<StatusIcon size={isMobile ? 10 : 12} />}
           >
             {item.queryStatus}
           </Badge>
           <Text 
-            size="xs" 
+            size={isMobile ? '10px' : 'xs'} 
             c="rgb(67, 75, 86)" 
             fw={600}
             style={{ 
@@ -206,11 +207,11 @@ export function MainContent({ filter }: MainContentProps) {
           <ActionIcon
             variant="subtle"
             color="gray"
-            size="sm"
+            size={isMobile ? 'xs' : 'sm'}
             onClick={() => toggleRowExpansion(item.id)}
             style={{ cursor: 'pointer' }}
           >
-            {isExpanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+            {isExpanded ? <IconChevronDown size={isMobile ? 14 : 16} /> : <IconChevronRight size={isMobile ? 14 : 16} />}
           </ActionIcon>
         </Tooltip>
       </Box>
@@ -225,6 +226,178 @@ export function MainContent({ filter }: MainContentProps) {
     return true;
   });
 
+  // Mobile Card Layout
+  const MobileCard = ({ item }: { item: typeof mockFormData[0] }) => (
+    <Card 
+      key={item.id}
+      shadow="sm" 
+      padding="md"
+      radius="lg"
+      style={{
+        backgroundColor: 'white',
+        border: '1px solid var(--mantine-color-gray-2)',
+        marginBottom: '12px',
+      }}
+    >
+      <Stack gap="sm">
+        <Text 
+          size="sm" 
+          fw={600} 
+          c="rgb(67, 75, 86)" 
+          lh={1.4}
+          style={{ 
+            fontFamily: 'Euclid Circular A, sans-serif',
+          }}
+        >
+          {item.question}
+        </Text>
+        
+        <Text 
+          size="xs" 
+          c="rgb(67, 75, 86)" 
+          lh={1.4}
+          style={{ 
+            fontFamily: 'Euclid Circular A, sans-serif',
+            opacity: 0.8,
+          }}
+        >
+          {item.answer}
+        </Text>
+
+        {/* Query information below the description */}
+        <Box style={{ marginTop: '8px' }}>
+          {getQueryDisplay(item)}
+        </Box>
+
+        {/* Expanded queries for mobile */}
+        {mockQueries[item.id] && (
+          <Collapse in={expandedRow === item.id} transitionDuration={300}>
+            <Box 
+              style={{
+                backgroundColor: 'var(--mantine-color-gray-0)', 
+                padding: '12px',
+                borderRadius: '8px',
+                marginTop: '8px',
+              }}
+            >
+              <Text 
+                size="xs" 
+                fw={600} 
+                c="rgb(67, 75, 86)" 
+                mb="sm"
+                style={{ 
+                  fontFamily: 'Euclid Circular A, sans-serif',
+                }}
+              >
+                Query Details
+              </Text>
+              
+              <Stack gap="sm">
+                {mockQueries[item.id].map((query) => (
+                  <Card key={query.id} padding="xs" style={{ backgroundColor: 'white' }}>
+                    <Stack gap="xs">
+                      <Group justify="space-between" align="flex-start">
+                        <Badge 
+                          color={query.status === 'OPEN' ? 'red' : 'green'} 
+                          variant="light" 
+                          size="xs"
+                        >
+                          {query.status}
+                        </Badge>
+                        <ActionIcon
+                          color="blue"
+                          variant="light"
+                          size="xs"
+                          onClick={() => handleEditQuery(query)}
+                        >
+                          <IconPencil size={12} />
+                        </ActionIcon>
+                      </Group>
+                      
+                      {editingQuery === query.id ? (
+                        <Stack gap="xs">
+                          <TextInput
+                            value={editingDescription}
+                            onChange={(event) => setEditingDescription(event.currentTarget.value)}
+                            size="xs"
+                            placeholder="Enter query description"
+                          />
+                          <Group gap="xs">
+                            <Checkbox
+                              checked={editingStatus === 'RESOLVED'}
+                              onChange={(event) => 
+                                setEditingStatus(event.currentTarget.checked ? 'RESOLVED' : 'OPEN')
+                              }
+                              size="xs"
+                              color="green"
+                              label={editingStatus === 'RESOLVED' ? 'Resolved' : 'Open'}
+                            />
+                          </Group>
+                          <Group gap="xs">
+                            <Button
+                              color="green"
+                              variant="light"
+                              size="xs"
+                              onClick={() => handleSaveQuery(query.id)}
+                              leftSection={<IconDeviceFloppy size={12} />}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              color="gray"
+                              variant="light"
+                              size="xs"
+                              onClick={handleCancelEdit}
+                              leftSection={<IconX size={12} />}
+                            >
+                              Cancel
+                            </Button>
+                          </Group>
+                        </Stack>
+                      ) : (
+                        <>
+                          <Text size="xs" lh={1.3}>
+                            {query.description}
+                          </Text>
+                          <Group gap="xs">
+                            <Text size="10px" c="gray.6">
+                              Created: {formatDate(query.createdAt)}
+                            </Text>
+                            <Text size="10px" c="gray.6">
+                              Updated: {formatDate(query.updatedAt)}
+                            </Text>
+                          </Group>
+                        </>
+                      )}
+                    </Stack>
+                  </Card>
+                ))}
+              </Stack>
+              
+              <Button
+                variant="light"
+                color="blue"
+                size="xs"
+                leftSection={<IconPlus size={14} />}
+                onClick={() => handleCreateQuery(item)}
+                fullWidth
+                mt="sm"
+                style={{ 
+                  fontSize: '12px',
+                  fontFamily: 'Euclid Circular A, sans-serif',
+                  fontWeight: 600,
+                }}
+              >
+                Add New Query
+              </Button>
+            </Box>
+          </Collapse>
+        )}
+      </Stack>
+    </Card>
+  );
+
+  // Desktop Table Layout
   const rows = filteredData.map((item) => (
     <React.Fragment key={item.id}>
       <Table.Tr 
@@ -292,17 +465,17 @@ export function MainContent({ filter }: MainContentProps) {
                   borderBottom: '1px solid var(--mantine-color-gray-2)',
                 }}
               >
-                                    <Text 
-                      size="sm" 
-                      fw={600} 
-                      c="rgb(67, 75, 86)" 
-                      mb="md"
-                      style={{ 
-                        fontFamily: 'Euclid Circular A, sans-serif',
-                      }}
-                    >
-                      Query Details
-                    </Text>
+                <Text 
+                  size="sm" 
+                  fw={600} 
+                  c="rgb(67, 75, 86)" 
+                  mb="md"
+                  style={{ 
+                    fontFamily: 'Euclid Circular A, sans-serif',
+                  }}
+                >
+                  Query Details
+                </Text>
                 <Table style={{ backgroundColor: 'white', fontSize: '14px' }}>
                   <Table.Thead>
                     <Table.Tr>
@@ -425,9 +598,8 @@ export function MainContent({ filter }: MainContentProps) {
                     onClick={() => handleCreateQuery(item)}
                     style={{ 
                       fontSize: '14px',
-                      fontFamily: 'Poppins, sans-serif',
+                      fontFamily: 'Euclid Circular A, sans-serif',
                       fontWeight: 600,
-                      fontStyle: 'normal',
                     }}
                   >
                     Add New Query
@@ -455,12 +627,12 @@ export function MainContent({ filter }: MainContentProps) {
 
   return (
     <Container size="xl" px={0}>
-      <Stack gap="xl">
+      <Stack gap={isMobile ? "md" : "xl"}>
         <Box>
           <Group justify="space-between" align="flex-end" mb="md">
             <Box>
               <Text 
-                size="2.25rem" 
+                size={isMobile ? "xl" : "2.25rem"}
                 fw={700} 
                 c="rgb(67, 75, 86)" 
                 mb="xs" 
@@ -470,10 +642,10 @@ export function MainContent({ filter }: MainContentProps) {
                 {getFilterTitle()}
               </Text>
               <Text 
-                size="lg" 
+                size={isMobile ? "sm" : "lg"}
                 c="rgb(67, 75, 86)" 
                 lh={1.5} 
-                maw={600}
+                maw={isMobile ? 300 : 600}
                 style={{ 
                   fontFamily: 'Euclid Circular A, sans-serif',
                   opacity: 0.7,
@@ -484,24 +656,22 @@ export function MainContent({ filter }: MainContentProps) {
             </Box>
             <Box ta="right">
               <Text 
-                size="sm" 
+                size={isMobile ? "xs" : "sm"}
                 c="rgb(67, 75, 86)" 
                 fw={600}
                 style={{ 
-                  fontFamily: 'Poppins, sans-serif',
-                  fontStyle: 'normal',
+                  fontFamily: 'Euclid Circular A, sans-serif',
                 }}
               >
                 {filteredData.length} of {mockFormData.length} entries
               </Text>
               {filter !== 'All' && (
                 <Text 
-                  size="xs" 
+                  size="10px"
                   c="rgb(67, 75, 86)" 
                   mt={2}
                   style={{ 
-                    fontFamily: 'Poppins, sans-serif',
-                    fontStyle: 'normal',
+                    fontFamily: 'Euclid Circular A, sans-serif',
                     opacity: 0.6,
                   }}
                 >
@@ -512,176 +682,208 @@ export function MainContent({ filter }: MainContentProps) {
           </Group>
         </Box>
         
-        <Card 
-          shadow="sm" 
-          padding={0}
-          radius="lg"
-          style={{
-            backgroundColor: 'white',
-            border: '1px solid var(--mantine-color-gray-2)',
-            overflow: 'hidden',
-          }}
-        >
-          {filteredData.length === 0 ? (
-            <Box ta="center" py={80}>
-              <Text size="xl" c="gray.5" fw={500} mb="xs">
+        {filteredData.length === 0 ? (
+          <Card 
+            shadow="sm" 
+            padding={isMobile ? "md" : "xl"}
+            radius="lg"
+            style={{
+              backgroundColor: 'white',
+              border: '1px solid var(--mantine-color-gray-2)',
+            }}
+          >
+            <Box ta="center" py={isMobile ? 40 : 80}>
+              <Text size={isMobile ? "lg" : "xl"} c="gray.5" fw={500} mb="xs">
                 No {filter.toLowerCase()} queries found
               </Text>
               <Text size="sm" c="gray.4">
                 Try selecting a different filter to view more data
               </Text>
             </Box>
-          ) : (
-            <Box style={{ overflowX: 'auto' }}>
-              <Table 
-                verticalSpacing={0} 
-                horizontalSpacing="xl"
-                style={{ 
-                  minWidth: '800px',
+          </Card>
+        ) : (
+          <>
+            {/* Mobile View - Cards */}
+            {isMobile ? (
+              <Stack gap="xs">
+                {filteredData.map((item) => (
+                  <MobileCard key={item.id} item={item} />
+                ))}
+              </Stack>
+            ) : (
+              /* Desktop View - Table */
+              <Card 
+                shadow="sm" 
+                padding={0}
+                radius="lg"
+                style={{
                   backgroundColor: 'white',
-                  tableLayout: 'fixed',
+                  border: '1px solid var(--mantine-color-gray-2)',
+                  overflow: 'hidden',
                 }}
               >
-                <Table.Thead style={{
-                  backgroundColor: '#ffffff',
-                  borderBottom: '2px solid var(--mantine-color-gray-2)',
-                }}>
-                  <Table.Tr style={{ height: '60px' }}>
-                    <Table.Th style={{ 
-                      paddingTop: '18px', 
-                      paddingBottom: '18px',
-                      fontWeight: 600,
-                      fontSize: '14px',
-                      color: 'rgb(67, 75, 86)',
-                      letterSpacing: '0.5px',
-                      textTransform: 'uppercase',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontStyle: 'normal',
-                      width: '35%',
+                <Box style={{ overflowX: 'auto' }}>
+                  <Table 
+                    verticalSpacing={0} 
+                    horizontalSpacing="xl"
+                    style={{ 
+                      minWidth: '800px',
+                      backgroundColor: 'white',
+                      tableLayout: 'fixed',
+                    }}
+                  >
+                    <Table.Thead style={{
+                      backgroundColor: '#ffffff',
+                      borderBottom: '2px solid var(--mantine-color-gray-2)',
                     }}>
-                      Question Column
-                    </Table.Th>
-                    <Table.Th style={{ 
-                      paddingTop: '18px', 
-                      paddingBottom: '18px',
-                      fontWeight: 600,
-                      fontSize: '14px',
-                      color: 'rgb(67, 75, 86)',
-                      letterSpacing: '0.5px',
-                      textTransform: 'uppercase',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontStyle: 'normal',
-                      width: '45%',
-                    }}>
-                      Answer Column
-                    </Table.Th>
-                    <Table.Th style={{ 
-                      paddingTop: '18px', 
-                      paddingBottom: '18px',
-                      fontWeight: 600,
-                      fontSize: '14px',
-                      color: 'rgb(67, 75, 86)',
-                      letterSpacing: '0.5px',
-                      textTransform: 'uppercase',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontStyle: 'normal',
-                      width: '20%',
-                    }}>
-                      Queries Column
-                    </Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>{rows}</Table.Tbody>
-              </Table>
-            </Box>
-          )}
-        </Card>
+                      <Table.Tr style={{ height: '60px' }}>
+                        <Table.Th style={{ 
+                          paddingTop: '18px', 
+                          paddingBottom: '18px',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          color: 'rgb(67, 75, 86)',
+                          letterSpacing: '0.5px',
+                          textTransform: 'uppercase',
+                          fontFamily: 'Euclid Circular A, sans-serif',
+                          width: '35%',
+                        }}>
+                          Question Column
+                        </Table.Th>
+                        <Table.Th style={{ 
+                          paddingTop: '18px', 
+                          paddingBottom: '18px',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          color: 'rgb(67, 75, 86)',
+                          letterSpacing: '0.5px',
+                          textTransform: 'uppercase',
+                          fontFamily: 'Euclid Circular A, sans-serif',
+                          width: '45%',
+                        }}>
+                          Answer Column
+                        </Table.Th>
+                        <Table.Th style={{ 
+                          paddingTop: '18px', 
+                          paddingBottom: '18px',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          color: 'rgb(67, 75, 86)',
+                          letterSpacing: '0.5px',
+                          textTransform: 'uppercase',
+                          fontFamily: 'Euclid Circular A, sans-serif',
+                          width: '20%',
+                        }}>
+                          Queries Column
+                        </Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>{rows}</Table.Tbody>
+                  </Table>
+                </Box>
+              </Card>
+            )}
+          </>
+        )}
       </Stack>
 
-      {/* Create Query Modal */}
+      {/* Create Query Modal - Full Screen on Mobile */}
       <Modal 
         opened={opened} 
         onClose={close} 
         title={
-          <Text size="lg" fw={600}>Create New Query</Text>
+          <Text size={isMobile ? "md" : "lg"} fw={600}>Create New Query</Text>
         }
-        size="lg"
-        centered
-        radius="lg"
-        padding="xl"
+        size={isMobile ? "100%" : "lg"}
+        fullScreen={isMobile}
+        centered={!isMobile}
+        radius={isMobile ? 0 : "lg"}
+        padding={isMobile ? "md" : "xl"}
         styles={{
           header: {
             backgroundColor: 'var(--mantine-color-gray-0)',
             borderBottom: '1px solid var(--mantine-color-gray-2)',
-            borderRadius: '12px 12px 0 0',
-            padding: '20px 24px',
+            borderRadius: isMobile ? 0 : '12px 12px 0 0',
+            padding: isMobile ? '16px' : '20px 24px',
           },
           body: {
-            padding: '24px',
+            padding: isMobile ? '16px' : '24px',
+            height: isMobile ? 'calc(100vh - 60px)' : 'auto',
+            overflowY: isMobile ? 'auto' : 'visible',
           },
         }}
       >
-        <Stack gap="xl">
+        <Stack gap={isMobile ? "md" : "xl"} style={{ height: isMobile ? '100%' : 'auto' }}>
           <Box
             style={{
               backgroundColor: 'var(--mantine-color-blue-0)',
               border: '1px solid var(--mantine-color-blue-2)',
               borderRadius: '8px',
-              padding: '16px',
+              padding: isMobile ? '12px' : '16px',
             }}
           >
             <Group gap="sm" mb="sm">
-              <Text size="sm" fw={600} c="blue.7">
+              <Text size={isMobile ? "xs" : "sm"} fw={600} c="blue.7">
                 Query Context
               </Text>
             </Group>
-            <Text size="sm" c="gray.7" lh={1.5} mb="sm">
+            <Text size={isMobile ? "xs" : "sm"} c="gray.7" lh={1.5} mb="sm">
               {selectedItem?.question}
             </Text>
-            <Text size="xs" c="gray.5" style={{ fontStyle: 'italic' }}>
+            <Text size="10px" c="gray.5" style={{ fontStyle: 'italic' }}>
               Title: Query | {selectedItem?.question}
             </Text>
           </Box>
 
-          <Box>
-            <Text size="sm" fw={500} mb="xs" c="gray.8">
+          <Box style={{ flex: isMobile ? 1 : 'none' }}>
+            <Text size={isMobile ? "xs" : "sm"} fw={500} mb="xs" c="gray.8">
               Query Description <Text span c="red">*</Text>
             </Text>
             <Textarea
               placeholder="Describe what clarification or additional information is needed..."
               value={queryDescription}
               onChange={(event) => setQueryDescription(event.currentTarget.value)}
-              minRows={5}
+              minRows={isMobile ? 6 : 5}
               autosize
-              maxRows={8}
+              maxRows={isMobile ? 12 : 8}
               styles={{
                 input: {
-                  fontSize: '14px',
+                  fontSize: isMobile ? '14px' : '14px',
                   lineHeight: 1.5,
-                  padding: '12px',
+                  padding: isMobile ? '10px' : '12px',
                 },
               }}
             />
-            <Text size="xs" c="gray.5" mt="xs">
+            <Text size="10px" c="gray.5" mt="xs">
               Provide clear details about what additional information is needed.
             </Text>
           </Box>
 
-          <Group justify="space-between" pt="md">
+          <Group justify="space-between" pt={isMobile ? "md" : "md"} style={{ 
+            marginTop: isMobile ? 'auto' : 'unset',
+            position: isMobile ? 'sticky' : 'static',
+            bottom: isMobile ? 0 : 'auto',
+            backgroundColor: 'white',
+            paddingTop: isMobile ? '16px' : '0',
+            borderTop: isMobile ? '1px solid var(--mantine-color-gray-2)' : 'none',
+          }}>
             <Button 
               variant="subtle" 
               color="gray"
               onClick={close}
-              size="md"
+              size={isMobile ? "md" : "md"}
+              fullWidth={isMobile}
+              style={{ flex: isMobile ? 1 : 'none', marginRight: isMobile ? '8px' : '0' }}
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSubmitQuery}
               disabled={!queryDescription.trim()}
-              size="md"
+              size={isMobile ? "md" : "md"}
               leftSection={<IconPlus size={16} />}
-              style={{ minWidth: '140px' }}
+              fullWidth={isMobile}
+              style={{ flex: isMobile ? 1 : 'none', minWidth: isMobile ? 'auto' : '140px' }}
             >
               Create Query
             </Button>
