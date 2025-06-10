@@ -17,7 +17,6 @@ interface MainContentProps {
   filter: FilterType;
 }
 
-// Helper functions for filtering data (now uses adapted API data)
 const getFilteredFormData = (
   formData: FormData[], 
   queries: Query[], 
@@ -28,7 +27,6 @@ const getFilteredFormData = (
     return formData;
   }
   
-  // For Open/Resolved filters, only show form data that has queries with that status
   return formData.filter(fd => {
     const queries = getQueriesForFormData(fd.id);
     return queries.some(query => query.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
@@ -46,44 +44,35 @@ const getFilteredQueries = (
     return queries;
   }
   
-  // For Open/Resolved filters, only show queries with that status
   return queries.filter(query => query.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
 };
 
 export function MainContent({ filter }: MainContentProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   
-  // API hooks
   const { formData: apiFormData, queries: apiQueries, loading, error, refetch } = useFormData();
   const createQuery = useCreateQuery((newQuery) => refetch());
   const updateQuery = useUpdateQueryComplete((updatedQuery) => refetch());
   const deleteQuery = useDeleteQuery(() => refetch());
   
-  // Modal state
   const [createModalOpened, { open: openCreateModal, close: closeCreateModal }] = useDisclosure(false);
   const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure(false);
   
-  // Form state
   const [selectedItem, setSelectedItem] = useState<FormData | null>(null);
   const [queryDescription, setQueryDescription] = useState('');
   const [queryToDelete, setQueryToDelete] = useState<Query | null>(null);
   
-  // Table state
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [editingQuery, setEditingQuery] = useState<number | null>(null);
   const [editingDescription, setEditingDescription] = useState('');
   const [editingStatus, setEditingStatus] = useState<'OPEN' | 'RESOLVED'>('OPEN');
 
-  // Fetch data on component mount
   useEffect(() => {
     refetch();
   }, [refetch]);
 
-  // Adapt API data to component format
   const adaptedData = adaptApiDataForComponents(apiFormData, apiQueries);
   const { formData, queries, getQueriesForFormData, getQueriesCount } = adaptedData;
-
-  // Event handlers
   const handleCreateQuery = (item: FormData) => {
     setSelectedItem(item);
     setQueryDescription('');
@@ -93,7 +82,6 @@ export function MainContent({ filter }: MainContentProps) {
   const handleSubmitQuery = async () => {
     if (selectedItem && queryDescription.trim()) {
       try {
-        // Find the original API FormData with the correct UUID
         const originalApiFormData = apiFormData.find(apiItem => 
           apiItem.question === selectedItem.question && 
           apiItem.answer === selectedItem.answer
@@ -105,8 +93,8 @@ export function MainContent({ filter }: MainContentProps) {
         
         await createQuery.execute(originalApiFormData, queryDescription.trim());
         closeCreateModal();
-    setQueryDescription('');
-    setSelectedItem(null);
+        setQueryDescription('');
+        setSelectedItem(null);
       } catch (err) {
         console.error('Failed to create query:', err);
       }
@@ -129,7 +117,6 @@ export function MainContent({ filter }: MainContentProps) {
 
   const handleSaveQuery = async (queryId: number) => {
     try {
-      // Find the original API Query with the correct UUID
       const mockQuery = queries.find(q => q.id === queryId);
       if (!mockQuery) {
         throw new Error('Could not find mock query');
@@ -146,9 +133,9 @@ export function MainContent({ filter }: MainContentProps) {
       }
       
       await updateQuery.execute(originalApiQuery.id, editingDescription, editingStatus);
-    setEditingQuery(null);
-    setEditingDescription('');
-    setEditingStatus('OPEN');
+      setEditingQuery(null);
+      setEditingDescription('');
+      setEditingStatus('OPEN');
     } catch (err) {
       console.error('Failed to save query:', err);
     }
@@ -193,23 +180,19 @@ export function MainContent({ filter }: MainContentProps) {
     setQueryToDelete(null);
   };
 
-  // Data preparation with API data
   const filteredFormData = getFilteredFormData(formData, queries, filter, getQueriesForFormData);
   const totalQueries = queries.length;
   const filteredQueries = filter === 'All' 
     ? queries 
     : queries.filter(q => q.status === filter.toUpperCase() as 'OPEN' | 'RESOLVED');
 
-  // Create wrapper functions to match component interface
   const getFilteredQueriesForComponent = (formDataId: number, filterType: FilterType): Query[] => {
     return getFilteredQueries(formDataId, filterType, getQueriesForFormData);
   };
-
-  // Filter descriptions
   const getFilterDescription = () => {
-    if (filter === 'Open') return 'Form responses with open queries that require attention and follow-up.';
-    if (filter === 'Resolved') return 'Form responses with resolved queries that have been addressed and completed.';
-    return 'All patient form responses and their associated queries.';
+    if (filter === 'Open') return 'Form responses with open queries that need attention.';
+    if (filter === 'Resolved') return 'Form responses with resolved queries.';
+    return 'All patient form responses and queries.';
   };
 
   const getFilterTitle = () => {
@@ -218,7 +201,6 @@ export function MainContent({ filter }: MainContentProps) {
     return 'All Queries';
   };
 
-  // Show loading state
   if (loading && formData.length === 0) {
     return (
       <Container size="xl" px={0}>
@@ -232,7 +214,6 @@ export function MainContent({ filter }: MainContentProps) {
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <Container size="xl" px={0}>
@@ -266,7 +247,6 @@ export function MainContent({ filter }: MainContentProps) {
   return (
     <Container size="xl" px={0}>
       <Stack gap={isMobile ? "md" : "xl"}>
-        {/* Header Section */}
         <Box>
           <Group justify="space-between" align="flex-end" mb="md">
             <Box>
@@ -305,7 +285,6 @@ export function MainContent({ filter }: MainContentProps) {
           </Group>
         </Box>
         
-        {/* Content Section */}
         {filteredFormData.length === 0 ? (
           <Card 
             shadow="sm" 
@@ -348,7 +327,6 @@ export function MainContent({ filter }: MainContentProps) {
         )}
       </Stack>
 
-      {/* Modals */}
       <CreateQueryModal
         opened={createModalOpened}
         onClose={closeCreateModal}

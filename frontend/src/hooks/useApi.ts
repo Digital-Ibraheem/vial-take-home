@@ -1,15 +1,6 @@
 import { useState, useCallback } from 'react';
 import api, { IFormData, IQuery, ICreateQuery, IUpdateQuery, ApiError, withRetry } from '../services/api';
 
-// Hook return types
-interface UseApiReturn<T> {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-  execute: (...args: any[]) => Promise<T>;
-  reset: () => void;
-}
-
 interface UseFormDataReturn {
   formData: IFormData[];
   queries: IQuery[];
@@ -17,61 +8,6 @@ interface UseFormDataReturn {
   error: string | null;
   refetch: () => Promise<void>;
 }
-
-// Generic hook for API operations
-function useApiOperation<T>(
-  operation: (...args: any[]) => Promise<T>,
-  options: {
-    withRetry?: boolean;
-    onSuccess?: (data: T) => void;
-    onError?: (error: Error) => void;
-  } = {}
-): UseApiReturn<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const execute = useCallback(async (...args: any[]): Promise<T> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const operationToRun = options.withRetry 
-        ? () => withRetry(() => operation(...args))
-        : () => operation(...args);
-
-      const result = await operationToRun();
-      setData(result);
-      
-      if (options.onSuccess) {
-        options.onSuccess(result);
-      }
-      
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(errorMessage);
-      
-      if (options.onError) {
-        options.onError(err as Error);
-      }
-      
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [operation, options]);
-
-  const reset = useCallback(() => {
-    setData(null);
-    setError(null);
-    setLoading(false);
-  }, []);
-
-  return { data, loading, error, execute, reset };
-}
-
-// Specialized hook for managing form data and queries
 function useFormData(): UseFormDataReturn {
   const [formData, setFormData] = useState<IFormData[]>([]);
   const [queries, setQueries] = useState<IQuery[]>([]);
@@ -100,76 +36,142 @@ function useFormData(): UseFormDataReturn {
 
 // Hook for creating queries
 function useCreateQuery(onSuccess?: (query: IQuery) => void) {
-  return useApiOperation(
-    (formData: IFormData, description: string, status: 'OPEN' | 'RESOLVED' = 'OPEN') =>
-      api.createQueryForFormData(formData, description, status),
-    {
-      withRetry: true,
-      onSuccess,
-      onError: (error) => {
-        console.error('Failed to create query:', error);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const execute = useCallback(async (formData: IFormData, description: string, status: 'OPEN' | 'RESOLVED' = 'OPEN') => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await withRetry(() => api.createQueryForFormData(formData, description, status));
+      if (onSuccess) {
+        onSuccess(result);
       }
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create query';
+      setError(errorMessage);
+      console.error('Failed to create query:', err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  );
+  }, [onSuccess]);
+
+  return { loading, error, execute };
 }
 
 // Hook for updating queries
 function useUpdateQuery(onSuccess?: (query: IQuery) => void) {
-  return useApiOperation(
-    (queryId: string, queryData: IUpdateQuery) =>
-      api.query.update(queryId, queryData),
-    {
-      withRetry: true,
-      onSuccess,
-      onError: (error) => {
-        console.error('Failed to update query:', error);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const execute = useCallback(async (queryId: string, queryData: IUpdateQuery) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await withRetry(() => api.query.update(queryId, queryData));
+      if (onSuccess) {
+        onSuccess(result);
       }
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update query';
+      setError(errorMessage);
+      console.error('Failed to update query:', err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  );
+  }, [onSuccess]);
+
+  return { loading, error, execute };
 }
 
 // Hook for deleting queries
 function useDeleteQuery(onSuccess?: () => void) {
-  return useApiOperation(
-    (queryId: string) => api.query.delete(queryId),
-    {
-      withRetry: false, // Don't retry deletes
-      onSuccess,
-      onError: (error) => {
-        console.error('Failed to delete query:', error);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const execute = useCallback(async (queryId: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await api.query.delete(queryId);
+      if (onSuccess) {
+        onSuccess();
       }
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete query';
+      setError(errorMessage);
+      console.error('Failed to delete query:', err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  );
+  }, [onSuccess]);
+
+  return { loading, error, execute };
 }
 
 // Convenience hook for status updates
 function useUpdateQueryStatus(onSuccess?: (query: IQuery) => void) {
-  return useApiOperation(
-    (queryId: string, status: 'OPEN' | 'RESOLVED') =>
-      api.updateQueryStatus(queryId, status),
-    {
-      withRetry: true,
-      onSuccess,
-      onError: (error) => {
-        console.error('Failed to update query status:', error);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const execute = useCallback(async (queryId: string, status: 'OPEN' | 'RESOLVED') => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await withRetry(() => api.updateQueryStatus(queryId, status));
+      if (onSuccess) {
+        onSuccess(result);
       }
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update query status';
+      setError(errorMessage);
+      console.error('Failed to update query status:', err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  );
+  }, [onSuccess]);
+
+  return { loading, error, execute };
 }
 
 // Hook for complete query updates (description + status)
 function useUpdateQueryComplete(onSuccess?: (query: IQuery) => void) {
-  return useApiOperation(
-    (queryId: string, description: string, status: 'OPEN' | 'RESOLVED') =>
-      api.updateQueryComplete(queryId, description, status),
-    {
-      withRetry: true,
-      onSuccess,
-      onError: (error) => {
-        console.error('Failed to update query:', error);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const execute = useCallback(async (queryId: string, description: string, status: 'OPEN' | 'RESOLVED') => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await withRetry(() => api.updateQueryComplete(queryId, description, status));
+      if (onSuccess) {
+        onSuccess(result);
       }
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update query';
+      setError(errorMessage);
+      console.error('Failed to update query:', err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  );
+  }, [onSuccess]);
+
+  return { loading, error, execute };
 }
 
 // Utility functions for common error handling
@@ -192,9 +194,7 @@ export function isNetworkError(error: unknown): boolean {
   return false;
 }
 
-// Export the main hooks
 export {
-  useApiOperation,
   useFormData,
   useCreateQuery,
   useUpdateQuery,

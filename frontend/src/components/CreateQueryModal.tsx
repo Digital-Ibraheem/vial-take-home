@@ -84,7 +84,7 @@ export function CreateQueryModal({
             Query Description <Text span c="red">*</Text>
           </Text>
           <Textarea
-            placeholder="Describe what clarification or additional information is needed..."
+            placeholder="What clarification do you need?"
             value={queryDescription}
             onChange={(event) => onQueryDescriptionChange(event.currentTarget.value)}
             minRows={isMobile ? 6 : 5}
@@ -99,7 +99,7 @@ export function CreateQueryModal({
             }}
           />
           <Text size="10px" c="dimmed" mt="xs">
-            Provide clear details about what additional information is needed.
+            What additional information do you need?
           </Text>
         </Box>
 

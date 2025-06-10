@@ -5,7 +5,7 @@ const errorHandler = (error: any, req: any, reply: any) => {
     reply.code(error.statusCode)
   }
   if (error instanceof PrismaClientKnownRequestError) {
-    reply.code(StatusCodes.notFound)
+    reply.code(404)
   }
   reply.send(error)
   return
@@ -21,10 +21,4 @@ export class ApiError extends Error {
   }
 }
 
-export const StatusCodes = {
-  badRequest: 400,
-  unauthorized: 401,
-  forbidden: 403,
-  notFound: 404,
-  unexpected: 500,
-}
+

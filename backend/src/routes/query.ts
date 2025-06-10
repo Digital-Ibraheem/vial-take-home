@@ -1,5 +1,4 @@
 import { FastifyInstance } from 'fastify'
-
 import prisma from '../db/db_client'
 import { serializer } from './middleware/pre_serializer'
 import { IQuery, ICreateQuery, IUpdateQuery } from './schemas/formData.interface'
@@ -14,9 +13,7 @@ function isValidStatus(status: string): boolean {
 async function queryRoutes(app: FastifyInstance) {
   app.setReplySerializer(serializer)
 
-  const log = app.log.child({ component: 'queryRoutes' })
-
-  // POST /query - Create a new query
+  // Create new query
   app.post<{
     Body: ICreateQuery
     Reply: IQuery
@@ -34,46 +31,39 @@ async function queryRoutes(app: FastifyInstance) {
       }
     },
     async handler(req, reply) {
-      log.debug('create query', { body: req.body })
-      try {
-        const { title, description, formDataId } = req.body
-        const status: string = req.body.status || 'OPEN'  // Default to OPEN
-        
-        if (!isValidStatus(status)) {
-          throw new ApiError('Status must be either OPEN or RESOLVED', 400)
-        }
-        
-        // Verify formData exists
-        const formData = await prisma.formData.findUnique({
-          where: { id: formDataId }
-        })
-        
-        if (!formData) {
-          throw new ApiError('FormData not found', 404)
-        }
-
-        const query = await prisma.query.create({
-          data: {
-            title,
-            description,
-            status: status as any,  // Cast to enum type
-            formDataId
-          },
-          include: {
-            formData: true
-          }
-        })
-        
-        reply.code(201).send(query)
-      } catch (err: any) {
-        log.error({ err }, err.message)
-        if (err instanceof ApiError) throw err
-        throw new ApiError('Failed to create query', 400)
+      const { title, description, formDataId } = req.body
+      const status: string = req.body.status || 'OPEN'
+      
+      if (!isValidStatus(status)) {
+        throw new ApiError('Status must be either OPEN or RESOLVED', 400)
       }
+      
+      // Check if formData exists
+      const formData = await prisma.formData.findUnique({
+        where: { id: formDataId }
+      })
+      
+      if (!formData) {
+        throw new ApiError('FormData not found', 404)
+      }
+
+      const query = await prisma.query.create({
+        data: {
+          title,
+          description,
+          status: status as any,
+          formDataId
+        },
+        include: {
+          formData: true
+        }
+      })
+      
+      reply.code(201).send(query)
     },
   })
 
-  // PATCH /query/:id - Update a query
+  // Update query
   app.patch<{
     Params: { id: string }
     Body: IUpdateQuery
@@ -94,63 +84,41 @@ async function queryRoutes(app: FastifyInstance) {
           description: { type: 'string' },
           status: { type: 'string', enum: ['OPEN', 'RESOLVED'] }
         }
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            title: { type: 'string' },
-            description: { type: 'string' },
-            status: { type: 'string' },
-            createdAt: { type: 'string' },
-            updatedAt: { type: 'string' },
-            formDataId: { type: 'string' }
-          }
-        }
       }
     },
     async handler(req, reply) {
-      log.debug({ queryId: req.params.id }, 'update query')
-      try {
-        const { id } = req.params
-        const updateData = req.body
+      const { id } = req.params
+      const updateData = req.body
 
-        if (updateData.status && !isValidStatus(updateData.status)) {
-          throw new ApiError('Status must be either OPEN or RESOLVED', 400)
-        }
-
-        // Check if query exists
-        const existingQuery = await prisma.query.findUnique({
-          where: { id }
-        })
-
-        if (!existingQuery) {
-          throw new ApiError('Query not found', 404)
-        }
-
-        const updatedQuery = await prisma.query.update({
-          where: { id },
-          data: {
-            ...updateData,
-            status: updateData.status as any,  // Cast to enum type
-            updatedAt: new Date()
-          },
-          include: {
-            formData: true
-          }
-        })
-
-        reply.send(updatedQuery)
-      } catch (err: any) {
-        log.error({ err }, err.message)
-        if (err instanceof ApiError) throw err
-        throw new ApiError('Failed to update query', 400)
+      if (updateData.status && !isValidStatus(updateData.status)) {
+        throw new ApiError('Status must be either OPEN or RESOLVED', 400)
       }
+
+      const existingQuery = await prisma.query.findUnique({
+        where: { id }
+      })
+
+      if (!existingQuery) {
+        throw new ApiError('Query not found', 404)
+      }
+
+      const updatedQuery = await prisma.query.update({
+        where: { id },
+        data: {
+          ...updateData,
+          status: updateData.status as any,
+          updatedAt: new Date()
+        },
+        include: {
+          formData: true
+        }
+      })
+
+      reply.send(updatedQuery)
     },
   })
 
-  // DELETE /query/:id - Delete a query (Bonus)
+  // Delete query
   app.delete<{
     Params: { id: string }
     Reply: { message: string }
@@ -162,40 +130,24 @@ async function queryRoutes(app: FastifyInstance) {
         properties: {
           id: { type: 'string', format: 'uuid' }
         }
-      },
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            message: { type: 'string' }
-          }
-        }
       }
     },
     async handler(req, reply) {
-      log.debug({ queryId: req.params.id }, 'delete query')
-      try {
-        const { id } = req.params
+      const { id } = req.params
 
-        // Check if query exists
-        const existingQuery = await prisma.query.findUnique({
-          where: { id }
-        })
+      const existingQuery = await prisma.query.findUnique({
+        where: { id }
+      })
 
-        if (!existingQuery) {
-          throw new ApiError('Query not found', 404)
-        }
-
-        await prisma.query.delete({
-          where: { id }
-        })
-
-        reply.send({ message: 'Query deleted successfully' })
-      } catch (err: any) {
-        log.error({ err }, err.message)
-        if (err instanceof ApiError) throw err
-        throw new ApiError('Failed to delete query', 400)
+      if (!existingQuery) {
+        throw new ApiError('Query not found', 404)
       }
+
+      await prisma.query.delete({
+        where: { id }
+      })
+
+      reply.send({ message: 'Query deleted successfully' })
     },
   })
 }

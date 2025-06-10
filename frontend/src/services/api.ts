@@ -1,9 +1,4 @@
-/**
- * API Service for Frontend-Backend Communication
- * Handles all CRUD operations for FormData and Queries
- */
-
-// Types matching backend interfaces
+// API service for frontend-backend communication
 export interface IFormData {
   id: string;
   question: string;
@@ -44,14 +39,10 @@ export interface IDeleteResponse {
   message: string;
 }
 
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-// Helper function to get headers based on whether there's a body
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const getHeaders = (hasBody: boolean = false): HeadersInit => {
   const headers: HeadersInit = {};
   
-  // Only set Content-Type if we're sending a body
   if (hasBody) {
     headers['Content-Type'] = 'application/json';
   }
@@ -59,60 +50,43 @@ const getHeaders = (hasBody: boolean = false): HeadersInit => {
   return headers;
 };
 
-// Generic API request handler with error handling
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  try {
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    // Check if we're sending a body
-    const hasBody = !!options.body;
-    
-    const response = await fetch(url, {
-      headers: getHeaders(hasBody),
-      ...options,
-    });
+async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const hasBody = !!options.body;
+  
+  const response = await fetch(url, {
+    headers: getHeaders(hasBody),
+    ...options,
+  });
 
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch {
-        // If we can't parse error JSON, use the default message
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    // Handle empty responses (like DELETE operations)
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      const responseData = await response.json();
-      
-      // Backend wraps responses in {statusCode, data, message} format
-      // Extract the actual data from the wrapper
-      const data = responseData.data || responseData;
-      
-      // Convert date strings back to Date objects for queries
-      if (data && typeof data === 'object') {
-        convertDateStrings(data);
-      }
-      
-      return data;
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorMessage;
+    } catch {
+      // ignore json parse errors
     }
     
-    return {} as T;
-  } catch (error) {
-    console.error(`API request failed for ${endpoint}:`, error);
-    throw error;
+    throw new Error(errorMessage);
   }
+
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    const responseData = await response.json();
+    const data = responseData.data || responseData;
+    
+    if (data && typeof data === 'object') {
+      convertDateStrings(data);
+    }
+    
+    return data;
+  }
+  
+  return {} as T;
 }
 
-// Helper function to convert date strings to Date objects
 function convertDateStrings(obj: any): void {
   if (obj && typeof obj === 'object') {
     if (Array.isArray(obj)) {
