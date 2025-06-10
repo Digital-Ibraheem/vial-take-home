@@ -34,6 +34,23 @@ The app is built with a Fastify/Prisma/PostgreSQL backend and a React/Next.js/Ma
 - **Deployment**: Render (API + Database), Vercel (Frontend)
 - **Testing**: Jest for unit and integration tests
 
+## Implementation Decisions
+
+### Bonus Features
+
+- **Real-Time UI Updates**: Instead of globally re-fetching query data after each update, the frontend uses local optimistic state updates to reflect changes instantly. This improves perceived performance and responsiveness.
+- **Light/Dark Theme Toggle**: Leveraged Mantine’s built-in color scheme provider to add dark mode with minimal overhead. All components are fully theme-aware.
+- **Responsive Query Expansion**: Only one response’s queries can be expanded at a time. This keeps the UI focused and avoids clutter, especially on smaller screens.
+- **Delete Functionality**: Implemented a `DELETE /query/:id` endpoint and UI control to fully manage query lifecycles, even though it was marked as optional in the original spec.
+
+### Deployment
+
+- **Split Monorepo**: Separated `/frontend` and `/backend` directories to streamline deployment to Vercel and Render respectively. Each part has isolated environment configs and build scripts.
+- **Render for Backend + DB**: Deployed the Fastify app and Postgres DB to Render. Used environment variables to inject dynamic database URLs and ports during runtime.
+- **Vercel for Frontend**: Deployed the Next.js app via Vercel, optimized for static assets and SSR performance.
+- **Keepalive Cron Job**: Set up an external cron job (via cron-job.org) to ping the backend every 15 minutes. This prevents cold starts due to Render’s free-tier idling.
+
+
 ## Local Development Setup
 
 ### Prerequisites
